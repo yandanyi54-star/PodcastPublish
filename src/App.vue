@@ -1050,6 +1050,8 @@ const buildHtml = (md, theme, overrides, brand) => {
     .replace(/background:[^;]+/, 'background:#ffffff')
     .replace(/color:[^;]+/, 'color:#1a1a1a');
   // 预处理：::: container 语法 → raw HTML div（marked 保留不处理，用户可见可编辑）
+  // remark-stringify 会把 ::: 转义为 \:::，先清理转义
+  md = md.replace(/\\(:::[^\n]*)/g, '$1');
   md = md.replace(/::: (\w+)\n([\s\S]*?)\n:::/g, (_, type, content) =>
     `<div data-decor="${type}">${content.trim()}</div>`);
 
@@ -1458,7 +1460,7 @@ const coverDirective = createDirectiveNode('cover');
 const dividerDirective = createDirectiveNode('divider');
 const quoteDirective = createDirectiveNode('quote');
 
-const decorDirectivePlugin = [coverDirective, dividerDirective, quoteDirective];
+
 
 // 光标处插入装饰块（::: container 语法，编辑器内可视化）
 const insertDecorBlock = (type) => {
@@ -1815,10 +1817,12 @@ onMounted(async () => {
         });
       })
       .use(listener)
+      .use(remarkDirective)
+      .use(coverDirective)
+      .use(dividerDirective)
+      .use(quoteDirective)
       .use(commonmark)
       .use(gfm)
-      .use(remarkDirective)
-      .use(decorDirectivePlugin)
       .create();
   } catch (e) {
     console.error('Milkdown 初始化失败:', e);
