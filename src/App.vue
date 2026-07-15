@@ -500,10 +500,9 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { Editor, rootCtx, defaultValueCtx, editorViewCtx, serializerCtx } from '@milkdown/kit/core';
 import { commonmark } from '@milkdown/kit/preset/commonmark';
 import { gfm } from '@milkdown/kit/preset/gfm';
-import { replaceAll, insert, $remark, $nodeSchema, $view } from '@milkdown/kit/utils';
+import { replaceAll, $nodeSchema } from '@milkdown/kit/utils';
 import { listener, listenerCtx } from '@milkdown/kit/plugin/listener';
 import remarkDirective from 'remark-directive';
-import { visit } from 'unist-util-visit';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import TurndownService from 'turndown';
@@ -1157,6 +1156,24 @@ const getMarkdown = () => {
   }
 };
 
+// 估算编辑器当前选区在 markdown 文本中的插入位置（用于在光标处插入内容）
+const getEditorMarkdownOffset = () => {
+  if (!milkdownEditor) return markdownText.value.length;
+  try {
+    return milkdownEditor.action((ctx) => {
+      const view = ctx.get(editorViewCtx);
+      const { from } = view.state.selection;
+      // 用 textBetween 获取选区前的纯文本（按 \n 分隔块），在 markdown 中定位
+      const textBefore = view.state.doc.textBetween(0, from, '\n');
+      if (!textBefore) return 0;
+      const idx = markdownText.value.lastIndexOf(textBefore);
+      return idx >= 0 ? idx + textBefore.length : markdownText.value.length;
+    });
+  } catch (e) {
+    return markdownText.value.length;
+  }
+};
+
 // 用 replaceAll 安全替换编辑器内容（外部按钮/AI/导入等统一入口）
 const setEditorMarkdown = (md) => {
   if (milkdownEditor) {
@@ -1390,49 +1407,36 @@ const buildQuoteSection = (text, decorColor, quoteBg, quoteText) => {
 
 // ---------- Milkdown 装饰节点插件（cover / divider / quote） ----------
 // 让 ::: 容器语法在编辑器内可视化，并与 buildHtml 输出保持一致
+// 实现方式与 POC 验证通过的代码完全对齐
 
-// 从 remark-directive 容器中提取所有文本
-const extractDirectiveText = (node) => {
-  if (!node.children) return '';
-  const texts = [];
-  const walk = (n) => {
-    if (n.type === 'text') texts.push(n.value);
-    if (n.children) n.children.forEach(walk);
-  };
-  walk(node);
-  return texts.join('');
-};
-
-const directiveRemark = $remark('decorDirective', () => remarkDirective);
-
-const createDirectiveNode = (type) => $nodeSchema(`${type}Directive`, () => ({
+const createDirectiveNode = (type) => $nodeSchema(type, () => ({
   content: type === 'divider' ? '' : 'text*',
   group: 'block',
-  attrs: {
-    text: { default: '' },
-  },
+  defining: true,
+  isolating: true,
+  attrs: { type: { default: type } },
   parseMarkdown: {
     match: (node) => node.type === 'containerDirective' && node.name === type,
-    runner: (state, node, treeType) => {
-      const text = extractDirectiveText(node);
-      state.openNode(treeType, { text });
-      if (type !== 'divider') state.addText(text);
+    runner: (state, node, nodeType) => {
+      const text = node.children?.map(c => c.value || '').join('') || '';
+      state.openNode(nodeType, { type });
+      if (type !== 'divider' && text) state.addText(text);
       state.closeNode();
     },
   },
   toMarkdown: {
-    match: (n) => n.type.name === `${type}Directive`,
+    match: (n) => n.type.name === type,
     runner: (state, node) => {
-      state.openNode('containerDirective', undefined, { name: type });
+      state.openNode('containerDirective', { name: type });
       if (type !== 'divider') {
         state.openNode('paragraph');
-        state.addText(node.textContent || node.attrs.text || '');
+        state.addText(node.textContent || '');
         state.closeNode();
       }
       state.closeNode();
     },
   },
-  toDOM: (node) => {
+  toDOM: () => {
     if (type === 'cover') {
       return ['div', { class: 'milkdown-decor-cover', 'data-decor-type': 'cover' }, ['h1', 0]];
     }
@@ -1441,13 +1445,17 @@ const createDirectiveNode = (type) => $nodeSchema(`${type}Directive`, () => ({
     }
     return ['section', { class: 'milkdown-decor-quote', 'data-decor-type': 'quote' }, 0];
   },
+  parseDOM: [
+    { tag: `div.milkdown-decor-${type}` },
+    ...(type === 'quote' ? [{ tag: `section.milkdown-decor-${type}` }] : []),
+  ],
 }));
 
 const coverDirective = createDirectiveNode('cover');
 const dividerDirective = createDirectiveNode('divider');
 const quoteDirective = createDirectiveNode('quote');
 
-const decorDirectivePlugin = [directiveRemark, coverDirective, dividerDirective, quoteDirective];
+const decorDirectivePlugin = [coverDirective, dividerDirective, quoteDirective];
 
 // 光标处插入装饰块（::: container 语法，编辑器内可视化）
 const insertDecorBlock = (type) => {
@@ -1456,10 +1464,16 @@ const insertDecorBlock = (type) => {
     ? '\n::: divider\n\n:::\n'
     : `\n::: ${type}\n点击编辑文字\n:::\n`;
 
+  const md = getMarkdown();
+  const offset = getEditorMarkdownOffset();
+  const newMd = md.slice(0, offset) + content + md.slice(offset);
+
   if (milkdownEditor) {
-    milkdownEditor.action(insert(content));
+    isSettingEditor = true;
+    milkdownEditor.action(replaceAll(newMd));
+    isSettingEditor = false;
   } else {
-    markdownText.value += content;
+    markdownText.value = newMd;
   }
   showToast(`已插入${labels[type] || '装饰元素'}`, 'success');
 };
@@ -1477,10 +1491,13 @@ const insertImageByUrl = () => {
 // ---------- 插入图片到编辑器 ----------
 const insertImage = (url, alt) => {
   const imageMarkdown = `\n![${alt || '图片'}](${url})\n`;
+  const md = getMarkdown();
+  const offset = getEditorMarkdownOffset();
+  const newMd = md.slice(0, offset) + imageMarkdown + md.slice(offset);
   if (milkdownEditor) {
-    milkdownEditor.action(insert(imageMarkdown));
+    milkdownEditor.action(replaceAll(newMd));
   } else {
-    markdownText.value += imageMarkdown;
+    markdownText.value = newMd;
   }
   showToast('图片已插入', 'success');
 };
@@ -1797,6 +1814,7 @@ onMounted(async () => {
       .use(listener)
       .use(commonmark)
       .use(gfm)
+      .use(remarkDirective)
       .use(decorDirectivePlugin)
       .create();
   } catch (e) {
