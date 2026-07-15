@@ -1,19 +1,13 @@
-# Python 虚拟环境
-venv/
-backend/venv/
-__pycache__/
-*.pyc
+# Dependencies
+node_modules/
 
-# Node.js 依赖
-frontend/node_modules/
+# Build output
+dist/
 
-# 环境变量 / 敏感信息
-.env
-*.env
+# WorkBuddy project data
+.workbuddy/
 
-# VSCode 配置（可选）
-.vscode/
-
-# 系统文件
+# OS & editor files
 .DS_Store
 Thumbs.db
+*.log
