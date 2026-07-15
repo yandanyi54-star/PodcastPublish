@@ -1157,6 +1157,17 @@ const getMarkdown = () => {
   }
 };
 
+// 用 replaceAll 安全替换编辑器内容（外部按钮/AI/导入等统一入口）
+const setEditorMarkdown = (md) => {
+  if (milkdownEditor) {
+    isSettingEditor = true;
+    milkdownEditor.action(replaceAll(md));
+    isSettingEditor = false;
+  } else {
+    markdownText.value = md;
+  }
+};
+
 // 把 THEMES 转为 CSS 规则，注入 .milkdown-theme-editor 容器
 // 与 buildHtml 共用同一份 THEMES + 品牌色 + 覆盖逻辑，保证所见即所得
 const editorThemeCss = computed(() => {
@@ -1466,7 +1477,11 @@ const insertImageByUrl = () => {
 // ---------- 插入图片到编辑器 ----------
 const insertImage = (url, alt) => {
   const imageMarkdown = `\n![${alt || '图片'}](${url})\n`;
-  markdownText.value = markdownText.value + imageMarkdown;
+  if (milkdownEditor) {
+    milkdownEditor.action(insert(imageMarkdown));
+  } else {
+    markdownText.value += imageMarkdown;
+  }
   showToast('图片已插入', 'success');
 };
 
@@ -1477,7 +1492,7 @@ const clearInlineStyles = () => {
     .replace(/\s+(style|class)\s*=\s*("[^"]*"|'[^']*')/gi, '')
     .replace(/<\/?(font|span)\b[^>]*>/gi, '');
   if (txt !== before) {
-    markdownText.value = txt;
+    setEditorMarkdown(txt);
     showToast('已清除内联样式，排版更干净了', 'success');
   } else {
     showToast('当前内容没有内联样式，很干净 ✨', 'success');
@@ -1501,7 +1516,7 @@ const importFromText = () => {
   } else {
     md = raw;
   }
-  markdownText.value = md.trim();
+  setEditorMarkdown(md.trim());
   importText.value = '';
   showToast('已提纯并填入编辑器', 'success');
 };
@@ -1668,7 +1683,7 @@ const aiGenerateTitle = async () => {
   const idx = lines.findIndex(l => /^#\s/.test(l));
   if (idx >= 0) lines[idx] = '# ' + titles[0];
   else lines.unshift('# ' + titles[0]);
-  markdownText.value = lines.join('\n');
+  setEditorMarkdown(lines.join('\n'));
   showToast('已套用标题：' + titles[0] + (titles[1] ? '（其他：' + titles[1] + '）' : ''), 'success');
 };
 
@@ -1683,7 +1698,7 @@ const aiWriteSummary = async () => {
   const summaryLine = '> ' + res.replace(/\n+/g, ' ').trim();
   if (idx >= 0) lines.splice(idx + 1, 0, '', '**摘要**', summaryLine, '');
   else lines.unshift('# 摘要', summaryLine, '');
-  markdownText.value = lines.join('\n');
+  setEditorMarkdown(lines.join('\n'));
   showToast('已生成摘要', 'success');
 };
 
@@ -1697,9 +1712,9 @@ const aiExpand = async () => {
   );
   if (!res) return;
   if (sel) {
-    markdownText.value = markdownText.value.split(sel).join(res);
+    setEditorMarkdown(markdownText.value.split(sel).join(res));
   } else {
-    markdownText.value = markdownText.value + '\n\n' + res;
+    setEditorMarkdown(markdownText.value + '\n\n' + res);
   }
   showToast('已扩写' + label, 'success');
 };
@@ -1711,7 +1726,7 @@ const aiStructure = async () => {
   );
   if (!res) return;
   if (window.confirm('一键排版将用 AI 结果替换当前全文，确定继续？')) {
-    markdownText.value = res.trim();
+    setEditorMarkdown(res.trim());
     showToast('已按公众号结构重排全文', 'success');
   }
 };
