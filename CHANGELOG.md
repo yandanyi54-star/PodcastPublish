@@ -5,411 +5,437 @@
 
 ---
 
-## [2026-07-15] 装饰元素两处渲染修复（v0.8.2）
+## [2026-07-22] 代码复查 · 可维护性加固 · 一键发布（v0.14.2）
 
-> 🐛 修复 v0.8.1 纯 CSS 装饰重构后残留的两个问题：封面标题因重复 style 属性丢失 margin、分割线按钮未产出 ※ ※ ※ 装饰线。
+> 🧹 全量代码复查（无阻断性 bug）+ 可维护性文档 + 发布自动化。纯前端、无后端、内容不出本机。
 
-### 1. Bug 修复（Fixed）
-- **封面内嵌 `<h1>` 重复 style 属性（margin 丢失）**
-  - v0.8.1 用纯 CSS div 渲染封面，内嵌 `<h1 style="margin:0;color:品牌色">`；但随后「标签样式注入」循环会对所有 h1 再用正则拼接主题样式，产生 `<h1 style="主题样式" style="margin:0;color">` 双 style 属性，浏览器只认第一个 → 内层的 margin:0 / 品牌色被丢弃（颜色因与主题 h1 色同值仍正确，但标题可能被主题 h1 顶部 margin 推下）。
-  - 注入循环改为「合并」语义：标签已有 style 时，主题样式在前、原 inline 在后（`style="主题;margin:0;color"`），既保留主题字号/字重继承，又让内联 margin:0/品牌色优先，且不再生成重复属性。
-  - **检查官必看**：插入封面卡片，标题应贴着上下边线、无异常顶部留白；切换不同主题，标题字号/字重应随之变化。
-- **分割线按钮未产出装饰分割线**
-  - 点「分割线」按钮插入的是 Markdown `---`（普通 `<hr>`），而 v0.8.1 描述的 `※ ※ ※` 纯 CSS 装饰分割线只对手动输入的 `::: divider` 生效，按钮与文档/设计意图不一致。
-  - 改为按钮也插入 `::: divider` 容器语法（与封面/金句一致），点击即产出 `※ ※ ※` 装饰分割线。
-  - **检查官必看**：点工具栏「分割线」，预览/导出应为 `※ ※ ※` 品牌色装饰线，而非一条普通细横线。
+### 1. 代码质量（Chores）
+- ESLint 恢复对 `.vue` 文件的审查（补 `vue-eslint-parser`），并清理 8 处整洁问题（未用导入 / 死代码 / `let`→`const` / DEV 日志规范化）；校验三件套 **lint 0 问题 · 测试 65 通过 · 构建成功**。
+- `vite.config.js` 构建基路径改为相对路径 `./`，同一份产物在国内外托管（GitHub Pages / 国内镜像）均可直接打开。
 
-### 2. 代码质量（Chores）
-- 重建 `dist`，发布包与源码同步；两处修复均经独立正则逻辑测试验证（封面 h1 单 style 属性 + margin:0 优先；`::: divider` 正确预处理为 data-decor 容器）。
+### 2. 文档（Docs）
+- 新增 `docs/维护指南.md`：「我想改 X → 改哪个文件」查表 + 发版 / 部署（全球版 GitHub Pages + 国内版 CloudStudio 镜像）/ 回滚 + 脆弱区红线。
+- 新增 `docs/净排-代码复查报告-2026-07-22.md`：复查结论与修复清单。
 
----
+### 3. 发布自动化（CI/CD）
+- `package.json` 新增 `release`（发版前自动跑 检查 + 测试 + 构建 质量网）与 `deploy:github`（推 `dist/` 到 GitHub Pages）。
+- `package.json` 的 `description` 统一为净排品牌口径。
 
-## [2026-07-14] 装饰元素 SVG → 纯 CSS + 删除氛围 Preview 模式（v0.8.1）
+### 4. 体验修复（Fixed）
+- 全局快捷键（如 `Ctrl+Shift+C` 复制 HTML）在输入框 / 下拉聚焦时不再误触发，避免打断填写；编辑器（`contenteditable`）不受影响。
 
-> 🎨 从微信兼容性层面重构装饰元素：内联 SVG（微信不稳定、文字不可选）→ 纯 CSS div（微信完美兼容、文字可选中可搜索）；删除「主题氛围（仅预览）」模式，预览即所得。
-
-### 1. 装饰元素渲染重构（Changed）
-
-- **封面卡片**：内联 SVG（渐变背景 + 白字矢量图）→ 纯 CSS div（上下品牌色边线 + 居中 `<h1>` 标题）。文字可选中、可搜索、可复制，微信完美保留
-- **分割线**：内联 SVG（横线 + 圆点矢量图）→ 纯 CSS 字符（`※ ※ ※` + 字间距）。更轻更稳，微信完美兼容
-- **金句卡片**：保持 styled `<section>` 不变（已是纯 CSS）
-- **主题继承**：封面嵌套 `<h1>`，主题字号/字重/字间距/字体自动继承，覆盖项也能直接生效
-
-### 2. 删除「主题氛围」预览模式（Removed）
-
-- 删除预览模式下拉选择器（「微信真实 / 主题氛围」二选一）→ 只保留微信真实白底
-- 删除 `previewMode` ref / `onPreviewModeChange` 函数 / settings 持久化字段
-- `buildHtml` 不再接受 `previewMode` 参数，始终强制白底
-- 装饰元素和主题天然一体，不再需要两个预览模式
-
-### 3. 代码清理（Removed）
-
-- 删除 `buildCoverSvg` 函数（23 行 SVG 渲染器）
-- 删除 `buildDividerSvg` 函数（7 行 SVG 渲染器）
-- 删除 `_decorSvgId` 计数器（SVG 渐变 ID 唯一化，不再需要）
-- 净减约 30 行代码
+### 5. 仓库清理（Chores）
+- `.gitignore` 增加 `.chrome-profile/`；移除误提交的历史构建产物（`dist-bak-*` / `dist-prev` / `dist-verify*` / `dist_r1` 等），仓库更整洁。
 
 ---
 
-## [2026-07-13] 配图功能重构：容器语法 + 主题级联配色 + 封面优化（v0.8.0）
+## [2026-07-21] 缺陷修复与打磨（v0.14.1）
 
-> 🎨 从产品债层面重构配图模块：HTML 注释占位符（编辑器不可见）→ `::: container` 可编辑语法；固定微信绿 fallback → 主题色级联；封面卡片视觉优化。
+> 🐛 修复 v0.14.0 审查发现的 3 个用户侧功能缺陷 + 6 个打磨项。纯前端、无后端、内容不出本机。
 
-### 1. 容器语法重构（Changed）
+### 1. 功能缺陷修复（Fixed）
+- **编辑器「字间距」滑杆失效**：`App.vue` 拼接 `letter-spacing` 时多余补了一次 `px`，产出非法 `0.5pxpx` 被浏览器丢弃（预览/导出正常，仅编辑器内失效）。现与 `buildHtml.js` 写法对齐。
+- **AI「选中替换」静默失败 + 假成功**：`replaceSelectedWith` 原用 `markdownText.indexOf(sel)` 字符串手术定位选区，跨块时序列化不一致频繁返回 `-1` 不替换；调用方仍弹「已扩写」成功。改用 Milkdown 官方 `replaceRange(markdown, {from,to})` 文档级区间替换；`aiExpand/aiRewrite/aiTranslate` 检查返回值，失败时弹错误 toast。
+- **「跟随系统」外壳恒为深色**：`variables.css` 把 `system` 与 `dark` 共用深色变量，使 OS=浅色时外壳深色、编辑区白底，明暗割裂且未真正跟随系统。现 `system` 在 JS 端 `resolveMode` 解析为 `light/dark` 写进 `data-theme`，清理 8 处 `:root[data-theme="system"]` 选择器，外壳真正跟随系统。
 
-- **占位方式变更**：`<!--DECOR:cover-->` HTML 注释（编辑器完全不可见）→ `::: cover\n标题\n:::` 容器语法（编辑器可见、可编辑、跨工具可移植）
-- **预处理**：`marked.parse` 之前正则拦截 `::: type\ncontent\n:::` → 转为 `<div data-decor="type">content</div>`（marked 保留 raw HTML 不处理）
-- **后处理重写**：4 行 `<!--DECOR:xxx-->` replace → 改为 3 行 `data-decor` div 替换（封面 SVG / 分割线 SVG / 金句 section）
-- **光标处插入**：`insertDecorImage`（追加到末尾）→ `insertDecorBlock`（光标处插入 + 自动选中「点击编辑文字」提示编辑），MdEditor 加 `ref` 获取 textarea `selectionStart/End`
+### 2. 打磨项（Changed / Polished）
+- **callAI `timedOut` 恒 false**：改为 getter，超时后实时反映真实状态（旧写法按值捕获，定时器改写的是闭包局部变量）。
+- **Onboarding 文案**：步骤 2「点击左侧『样式』」→「点击左侧『外观』」（工具栏已改名）。
+- **resize 拖拽监听器泄漏**：组件卸载瞬间若仍在拖拽，`document` 级 `pointermove/pointerup` 监听未移除，已在 `onUnmounted` 兜底清理。
+- **品牌字体「清除」入口**：外观面板正文字体新增「清除」按钮，与品牌主色清除对称（底层 `useBrand.clearBrandFont` 已就绪，仅缺 UI 接线）。
+- **ThemeModeSwitch 键盘可达性**：已有 `role="radiogroup"`，补 roving tabindex + 方向键移动（radiogroup 规范）。
+- **stripBareDirectives 误删边界**：种子块中和正则原为 `(cover|divider|quote)` 全匹配，收窄为仅 `cover`（默认种子块只可能是 cover 类型），避免误删用户真实内容中「恰好是『点击编辑文字』」的 divider/quote 装饰块。
 
-### 2. 三层级联配色（Changed）
-
-- **颜色解析**：从当前主题 `t.h1` 提取 `themeAccent`、从 `t.blockquote` 提取 `quoteBg` / `quoteText`，`decorColor = brand?.color || themeAccent`
-- **删除 `#07c160` 硬编码**：`buildDecorSvg` 的 fallback 从微信绿改为主题色解析值，确保装饰元素与主题配色一致
-- **金句卡片继承引用块配色**：`buildQuoteSection` 使用 `quoteBg`（背景）+ `quoteText`（文字）+ `decorColor`（左边框），与主题 blockquote 视觉一体化
-
-### 3. 封面卡片视觉优化（Changed）
-
-- **渐变方向**：45° 对角（`x2="1" y2="1"`）→ 90° 纵向（`x2="0" y2="1"`），光源从上方更符合视觉直觉
-- **渐变色值**：`brand → _brandShade(brand, -12)`（深→更深）→ `_brandShade(decorColor, 15) → decorColor`（浅→深），营造光感不沉闷
-- **字重/字号**：`font-weight: 500` / `46px` → `font-weight: 700` / `48px`，彩色背景上文字更有存在感
-- **字间距/装饰线**：新增 `letter-spacing="2"` 呼吸感 + 标题下方白色 40% 透明度装饰短线
-
-### 4. 面板重构（Changed）
-
-- **标题改名**：工具栏 + 面板标题「配图」→「装饰」
-- **面板拆双区域**：「本地装饰图」(4项混排) → 「装饰元素」(3项) + 「插入图片」(URL)，语义清晰
-- **删除 emoji 卡片**：功能模糊、使用率低、与其他元素视觉语言不统一
-- **新增 `buildQuoteSection`**：金句卡片从 SVG 改为 styled `<section>`，微信对内联 style 支持更稳定，支持多行自动换行
-- **函数拆分**：单体 `buildDecorSvg(type, brandColor, bare)` → 三个独立函数 `buildCoverSvg(text, decorColor)` / `buildDividerSvg(decorColor)` / `buildQuoteSection(text, decorColor, quoteBg, quoteText)`，删除 `bare` 参数和 `data:image/svg+xml` 返回路径
-
-### 检查官必看
-
-| 验收项 | 预期 |
-|------|------|
-| 编辑器可见性 | 插入装饰后编辑器可见 `::: cover\n点击编辑文字\n:::`，不再是不可见注释 |
-| 光标处插入 | 光标在段落中间时点击「封面卡片」，插入位置为光标处而非文末 |
-| 主题配色跟随 | 切换主题后，封面/金句/分割线颜色跟随主题强调色变化 |
-| 品牌色覆盖 | 设置品牌色后，装饰元素颜色跟随品牌色 |
-| 封面字重 | 封面标题为粗体（700），不再是中等字重（500） |
-| 金句卡片 | 渲染为带左边框的浅色底卡片，非 SVG |
-| 微信兼容 | 复制 HTML 粘贴到微信编辑器，封面/分割线/金句均正常显示 |
+### 3. 测试
+- 新增回归用例：编辑器 `letter-spacing` 不再出现双 `px`；`system` 模式外壳明暗与编辑区一致；AI 选中替换（空选区返回 false、跨块保留标题、单行替换成功）；`stripBareDirectives` 边界（divider/quote 保留、cover 种子中和）；`callAI.timedOut` 超时后实时为 true。
+- `vitest` 全绿（61 → 65），`vite build` 通过。
 
 ---
 
-## [2026-07-13] 配图功能重构：占位符 + 内联 SVG 直出（v0.7.0）
+## [2026-07-21] UX 架构重设计落地 · 响应式 + 交互一致性（v0.14.0）
 
-> 🎨 修复配图功能两大历史痛点：① 编辑器被 base64 长串污染（50~70KB 文本插入编辑器）② 微信后台不支持 `<img data-URI>`，导致装饰图在最终输出中完全不显示。
+> 📱 全量落地 UX 架构重设计 12 个断点（B1–B12）+ 响应式根基打磨：平板编辑器最小宽达标 480px、转化闭环（发布向导 / 入口协调）、外观三态与样式统一、AI 前置说明与导入去向，组件化收尾并补齐暗色对比度。纯前端、无后端、内容不出本机。
 
-### 1. 核心架构变更（Changed）
+### 1. 响应式根基打磨（Changed）
+- `.app-root` 改用 `100dvh`，规避移动端地址栏导致的高度跳动
+- `≤768px` 左侧工具栏改为横向滚动单行，按钮 `min-height:44px` 触屏可达；分组由纵向堆叠改为横向平铺，修复底栏被撑到 ~160px 高的 bug
+- `.main-content` 加 `padding-bottom:56px` 防工具栏遮挡编辑区
+- Onboarding 卡片加 `max-height:90dvh + overflow-y:auto`，小屏可滚动
+- 新增手机横屏（`orientation:landscape`）媒体查询适配
 
-- **占位符机制**：`insertDecorImage` 不再插入 base64 data-URI，改为插入轻量 HTML 注释占位符（`<!--DECOR:cover-->` 仅 13 字符，原来 5~7 万字符），编辑器干净无污染
-- **内联 SVG 直出**：`buildHtml` 输出时，占位符直接替换为内联 `<svg>...</svg>` 标签，**微信后台完全兼容**（微信过滤 `<img data-URI>` 但保留内联 `<svg>`）
-- **删除 `svgToPngDataUrl`**：该函数将 SVG 栅格化为 PNG base64，现已无调用方，彻底移除（微信不支持任何 data-URI 图片，转 PNG 无意义）
-- **`buildDecorSvg` 升级**：新增 `bare` 参数，`bare=true` 返回裸 `<svg>` 标签（供 `buildHtml` 内联使用）；渐变 ID 自增唯一化（`dg0/dg1/...`）避免多 SVG 同页冲突；新增 `style` 响应式属性（`max-width:100%`）和 `rx` 圆角
+### 2. 平板编辑器最小宽达标（Fixed, B8）
+- **问题**：重设计规范要求平板编辑器可视宽度 ≥480px，初版仅设 `min-width:260px`，iPad 810px 宽开面板时编辑器可见区仅 ≈458px
+- **修复**：`@media (max-width:1024px)` 块改写——面板改为 `position:fixed` 纯覆盖（`.main-content.panel-open` 由推挤 `margin-left:280px` 改为 `margin-left:0`）；面板打开时 `.preview-section{display:none}` 避免争宽；关闭时预览退为窄侧栏 `26vw max 210px`；`.editor-section min-width` 260px→**480px**
+- 验证：≥1024px 完全达标；769–1023px 编辑器盒宽 ≥480px 不溢出
 
-### 2. 配图面板 UI 优化（Changed）
+### 3. 转化闭环（New, B4/B9/B12 · M1）
+- **B4 发布向导**：复制 HTML 成功后常驻轻引导卡片（✓已复制 + 一键「打开微信后台」+ 粘贴自检清单），不再一闪而过；发布工具栏新增「微信」按钮把 `openWeChat` 提至主发布流
+- **B9 入口协调**：`onMounted` 加 `!showRecoveryBanner` 守卫（恢复横幅优先于 Onboarding）；`finishOnboarding` 去掉 `loadSampleArticle()`（不再静默覆盖用户草稿）；空状态保留「载入示例文章」按钮（用户主动触发）
+- **B12 复制告警收紧**：base64 告警改为条件化，仅当 HTML 含 `data:` URI 时才提示需在微信素材库上传，普通文本不再误报
 
-- **卡片信息升级**：4 个装饰图按钮卡片从 emoji+名称升级为 SVG 线性图标 + 名称 + 尺寸标注 + 场景描述
-  - 渐变封面 `📷` → 图片图标 + "800×400 · 顶部展示"
-  - 分割线 `➖` → 分割线图标 + "800×40 · 段落分隔"
-  - 卡片底图 `✨` → 卡片图标 + "400×400 · 重点突出"
-  - 引用背景 `💬` → 引用图标 + "800×200 · 金句装点"
-- **CSS 重构**：`.decor-item` 间距收紧（`gap:6→4`），新增 `.decor-icon` / `.decor-name` / `.decor-meta` 三层信息架构，hover 时图标同步变色
+### 4. 一致性收敛（Changed, B1/B2/B3/B5 · M2）
+- **B5 样式统一**：合并「样式」+「设置-品牌」为单一「外观」面板 `AppearancePanel.vue`，显式三层叠（主题 → 品牌色 → 逐元素微调）+ 级联说明；手机型号作为独立「预览设备」组；工具栏「样式」→「外观」、移除「设置」项
+- **B2 微信深色归位**：从发布组移除，移入 `PreviewPanel` 头部按钮（标注「仅预览」，v-model 双向绑定，不影响复制/导出）
+- **B3 外观三态**：`cycleThemeMode` 循环切换改为纵向 `radiogroup` 三态（浅色 / 深色 / 跟随系统，`aria-checked` 一步直达），含移动端横排 + 横屏 40px 紧凑布局
+- **B1 装饰解耦**：工具栏装饰项 title/aria 统一为「装饰元素」；面板删除「800×400 / 800×40」图片尺寸文案（纯装饰语义），移除 `image-notice` 图片提示块
 
-### 检查官必看
+### 5. 打磨与架构基座（Changed/Fixed, B6/B7/B10/B11 · M3）
+- **B6 上下文栏一致性**：`updateSelectionType` 去掉「≥10字」限制，短文也能进入 text 分支显示格式化操作（不再空白死路）；图片节点（NodeSelection）不显示空栏；新增 Milkdown `toggleStrong/toggleEmphasis/toggleLink` 命令封装 `formatBold/formatItalic/formatLink`
+- **B7 导入去向**：`importFromText` 提纯后自动关闭面板、滚动编辑器顶部、`toast('已导入 N 字')`，导入反馈清晰
+- **B11 AI 前置说明**：`AIPanel.vue` 顶部新增可关闭 `.ai-intro-notice` 块（说明需自备 Key + 仅本地直连厂商），`localStorage(podcast_ai_intro_seen)` 记忆已读；App.vue 加 `aiIntroSeen/dismissAiIntro` 状态 + prop/emit
+- **B10 组件化收尾**：新建 `PublishWizard.vue`（发布引导卡片）+ `ThemeModeSwitch.vue`（三态控件，含 `:focus-visible` 焦点环）；删除孤儿组件 `StylePanel.vue`/`SettingsPanel.vue`；`src/styles/variables.css` 补 `--accent` 语义变量，深色 `--text-tertiary` 提亮 `#888698→#9b99ab`（3.82→4.87:1 达 WCAG AA）、深色 `--accent` 提亮 `#9b8cff`，并修深色下 `.ai-intro-dismiss` 文字色（亮紫背景白字 2.77→深色文字 6.16:1）
 
-| 验收项 | 预期 |
-|--------|------|
-| 点击「渐变封面」→ 编辑器 | 仅插入 `<!--DECOR:cover-->`（13 字符），编辑器无 base64 污染 |
-| 切换「微信预览」模式 | 装饰图渲染为内联 `<svg>`，色彩跟随当前品牌色 |
-| 微信真实模式复制粘贴到公众号 | 内联 SVG 正常显示（微信后台兼容） |
-| `vite build` | 零错误退出 |
-| 旧文章含 base64 图片 | 仍正常通过 marked `<img>` 渲染，向后兼容 |
+### 6. 测试与质量（Test）
+- 全量 **52 vitest 通过**（含既有 Enter / 序列化 / 装饰 REGRESSION 用例），`vite build` 零错误
+- 暗色对比度审计达 AA（正文 / 次要文字 / 强调色全量核对）
 
----
-
-## [2026-07-13] 标签样式注入修复 + 品牌色重染健壮性（v0.6.3）
-
-> 🐛 修复一个自 v0.1 起长期存在的严重渲染 bug：标签内联样式注入正则只能匹配「无属性」标签，导致链接、图片、代码块等带属性标签的样式（含品牌色重染链接）从未生效；并顺带增强品牌色重染的健壮性。
-
-### 1. Bug 修复（Fixed）
-- **标签内联样式注入正则只匹配无属性标签（核心渲染 bug）**
-  - 旧正则 `<${tag}(\s|)>` 要求标签名后紧跟「可选空白再紧跟 `>`」，但 marked 渲染带属性标签时为 `<a href="...">`、`<img src="...">`、`<code class="...">`——`<a` 后面是属性而非 `>`，正则 **0 次命中**。后果：链接/图片/代码块的样式（以及品牌色重染链接、用户对 a/img/code 的覆盖）全部从未注入，一直是浏览器默认样式。
-  - 改用 `<${tag}(\s[^>]*)?>` 吞掉可选属性并保留；替换串以 `>` 闭合标签（修正一处会吞掉结束 `>` 的书写）。
-  - **检查官必看**：插入带链接的段落，链接应为品牌色/主题色（非默认蓝）；插入图片应被 `max-width:100%` 约束且带圆角；插入代码块应带主题配色背景。导出 HTML 中这些标签的 `style` 应存在、且 `href/src/class` 不丢失。
-- **品牌色重染引用分割线写死整段边框（健壮性）**
-  - 旧逻辑 `border-left:[^;]+` → `border-left:3px solid 品牌色` 是整串替换，会覆盖主题原本的边框宽度/线型（如某主题用 `4px dashed` 会被压成 `3px solid`）。
-  - 改为只换颜色、保留主题宽度/线型：`border-left:([^;]*?)(#[0-9a-fA-F]{3,8})` → `$1品牌色`。
-  - **检查官必看**：开启品牌色后，引用左侧色条应为品牌色；若将来某主题用虚线/不同宽度，线型应被保留。
-
-### 2. 代码质量（Chores）
-- 重建 `dist`，发布包与源码同步；新正则 `(\s[^>]*)?` 已确认打进构建产物（索引文件含 `new RegExp(\`<${Tt}(\\s[^>]*)?>\`...)`）。
-
-### 3. 已知局限（Known Issues）
-- 与历史一致：表格斑马纹在微信后台可能因样式过滤丢失（平台限制）。
+### 7. 已知诚实备注（不达标项留痕）
+- **B10「App.vue 行数明显下降」未严格达成**：因新增发布向导 / 外观三态等功能，App.vue 由 v0.13.3 ~2800 行净增至 **3457 行**；但组件化目标（拆出 AppearancePanel/PublishWizard/ThemeModeSwitch，删除 StylePanel/SettingsPanel 孤儿）已达成
+- **B10 tokens.css 基座**：原计划新建 `tokens.css`，实际增强既有 `src/styles/variables.css`（补齐 `--accent` 等语义变量），未另立文件
+- **EntryCoordinator 未单独拆分**：Onboarding + 恢复横幅的入口协调逻辑仍保留在 App.vue，未抽为独立协调器
 
 ---
 
-## [2026-07-13] 主题模板大扩容：10 套模板 + 全元素覆盖（v0.6.0）
+## [2026-07-20] 深色模式根治 + 微信深色预览模拟（v0.13.3）
 
-> 🎨 模板从 4 套扩展到 10 套，覆盖公众号主流内容场景；同时将模板注入元素从 11 个 HTML 标签扩展到 23 个，消除「深层标题/代码/表格/语义标注」裸奔问题。
+> 🌙 修复「开深色模式后编辑器背景变暗、但文字/主题色没跟着变」导致正文与强调色看不见的顽疾；新增「微信深色」预览开关，发布前自查读者深色端观感。
 
-### 1. 新增功能（New）
-- **新增 6 套主题模板**：
-  - `biz_blue` 商务蓝调：钢蓝强调色 + 纯白底，适合职场/财经/企业管理
-  - `warm_coffee` 暖咖生活：咖啡棕 + 奶油底，适合美食/旅行/生活方式
-  - `ink_literati` 墨韵文心：墨蓝 + 宣纸白 + 宋体，适合散文/诗歌/文学创作
-  - `study_notes` 学堂笔记：学院蓝 + 纯白底 + 暖黄引用框，适合教程/知识科普
-  - `forest_nature` 森系自然：松绿 + 浅绿底，适合健康/养生/户外自然
-  - `orange_vibe` 橘光活力：暖橘 + 暖白底 + 大圆角，适合娱乐/流行文化
-- **模板全面升级三层元素覆盖（L1+L2+L3）**：4 个旧模板 + 6 个新模板均补齐 25 个字段，包括——
-  - L1 基础层级：h4-h6 递减字号、code 内联代码、pre 代码块、hr 分割线
-  - L2 富元素：table/th/td 表格边框+表头底色、嵌套列表缩进+缩小字号
-  - L3 语义标注：strong 加粗加重色、em 斜体浅色、del 删除线半透明、mark 高亮底色
-- **buildHtml 注入链路扩展**：`styleableTags` 从 11 个标签扩容到 23 个；新增 post-process A（嵌套列表深度注入）和 post-process B（表格偶数行斑马纹）
-  - **检查官必看**：所有 10 个模板全覆盖以下元素——六级标题、代码行内/代码块、分割线、表格（含斑马纹）、加粗/斜体/删除线/高亮、二级嵌套列表
+### 1. 编辑器深色模式（背景与文字一同切换）
+**根因**：原 `editorThemeCss` 只把 `.milkdown .ProseMirror` 的 `body` 底色强行换成深色（`App.vue` 原 840-848 行），但 h1/p/li 等元素的颜色是主题内联样式定义的、没跟着换，于是深底下主题强调色（如 `#8b0000` 深红）几乎不可见。
+**修复**：新增 `src/darkTheme.js`，`deriveDarkTheme(theme)` 用 HSL 颜色变换把整主题派生为暗色版——背景转暗、正文/强调色提亮（轻微降饱和以提升深底可读性）。深色模式下 `editorThemeCss` 改用派生主题（浅色模式仍强制白底，不变）。验证：深色模式下编辑器 h1=`#f89696`、正文=`#d4d4d4`，深底下清晰可读。
 
-### 2. 向后兼容（Compatibility）
-- 旧 4 个模板核心字段（h1-h3/p/blockquote/ul/ol/li/img/a）完全不变，仅追加新字段
-- 用户自定义覆盖（customOverrides）逻辑不变
-- 品牌色重染逻辑不变（仅对 h1/a/blockquote 生效）
+### 2. 预览「模拟微信深色模式」开关
+**背景**：查微信官方文档 + 135/365/壹伴实测 —— 读者手机开深色模式时，微信**自动反色**：无彩色（黑白灰）按算法反转（背景≈`RGB(36,36,36)`、文字转浅），但**有彩色（主题强调色）原样保留、不反转**；文章内不支持 `prefers-color-scheme`、不支持 `<style>`、过滤 `!important`，故导出 HTML 无法自行跟随读者深色模式。结论：导出始终浅色（交给微信算法），预览增加模拟开关。
+**修复**：`buildHtml` 增加 `options.wechatDark`，为 true 时用 `deriveWeChatDarkTheme(theme)`（背景压暗、无彩色文字反白、**彩色强调色保留**——如实暴露微信不反转彩色的低对比风险）。工具栏新增「微信深色」开关，仅影响预览、不影响复制/导出（导出恒浅色）。验证：开关开后预览背景 `#252522`、正文浅灰、h1 仍为 `#8b0000`（彩色保留）；开关关回白底。
 
-### 3. 已知局限（Known Issues）
-- 表格斑马纹在微信后台可能因样式过滤而丢失（微信对 `<tr>` 内联 style 支持不稳定），属于平台限制
-- 深层层级标题（h5/h6）在微信后台字号与预览可能有轻微差异（微信对 16px 以下字号可能做缩放），建议内容以 h1-h4 为主
+### 3. 关键实现细节
+- 颜色变换统一在 `src/darkTheme.js`：`parseColor`/`rgbToHsl`/`hslToRgb` + `mapColorsInStyle`（按 `color`/`background`/`border` 属性分别变换）+ 两套派生函数共用。
+- HSL 饱和度坑：近白浅色表面（暖白 `#f9f7f1`、淡粉白 `#fff5f5`）在 HSL 下饱和度极高，直接压暗会变成深红/深蓝怪色；故背景 `L>0.8` 时压成中性深灰（`L≈0.14`）。
+- `editorThemeCss` 与 `buildHtml` 内主题变量原均为 `const t`，派生需重新赋值 → 改为 `let t`（否则运行时 `Assignment to constant` 导致编辑器不挂载）。
 
----
+## [2026-07-20] 装饰块与 Enter 幽灵封面根治（v0.13.2）
 
-## [2026-07-13] 构建链路三处缺陷修复（v0.6.2）
+> 🐛 修复「按 Enter 在编辑器内冒出封面卡片」的顽疾；修复装饰语法 `::: cover` 在编辑器内完全不渲染。
 
-> 🐛 修复 v0.6.0 模板扩容后暴露的 3 个功能性问题：嵌套列表深度样式从未生效、表格斑马纹硬编码在深色主题下刺眼、标签覆盖整体替换丢失主题样式。
+### 1. Enter 凭空插入封面卡片（Bug A 根治）
 
-### 1. Bug 修复（Fixed）
-- **嵌套列表深度注入从未生效（Post-process A）**
-  - 旧正则 `/(<li[^>]*>)\s*(<(?:ul|ol))/` 要求 `<li>` 后紧跟空白再跟列表，但 marked 渲染嵌套列表时内层 `<ul>` 紧跟在 `<li>` 文本之后（中间有文字、无空白），正则 **0 次命中**——v0.6.0 宣称的「二级嵌套列表缩进+缩小字号」实际从未应用。
-  - 改用负向前瞻 `(?:(?!<\/li>)[\s\S])*?` 限制只匹配「同一 `<li>` 内首个嵌套列表」，避免跨 `<li>` 误配；若嵌套列表本身已带 `style`，则合并而非覆盖。
-  - **检查官必看**：写一段含二级嵌套的 Markdown（如 `- A` 换行缩进 `- A1` / `- A2`），预览/导出里二级项应有 `margin-left:8px` 缩进且字号 15px，比一级项更窄更小。
-- **表格斑马纹硬编码 `#f9f9f9` 在深色主题下刺眼（Post-process B）**
-  - 旧逻辑把偶数行背景写死浅灰，在 `neon_tech`（底色 `#0d1117`）等深色主题里会冒出亮白灰行。
-  - 改为从 body 背景色派生：浅色底略深、深色底略浅（亮度 ≥128 偏移 -10，否则 +18），自动适配 10 套主题与 wechat 白底模式。
-  - **检查官必看**：切到 `neon_tech` 主题插入 3 行以上表格，偶数行应是深色调（约 `#1f2329`）而非亮灰；浅色主题应是协调的派生浅色（如 `#efede7`）而非死白灰 `#f9f9f9`。
-- **标签覆盖是整体替换而非合并（L1 注入）**
-  - 当用户只把 `h1` 颜色改成红色，h1 会丢掉主题的字号 32px、字重、下边框，退化成浏览器默认 h1。
-  - 改为合并语义：用户覆盖叠在主题样式之上（override 在后，优先级更高）。
-  - **检查官必看**：在样式面板把 h1 只改颜色，h1 应仍保留 32px 字号与下边框（仅颜色变了），而非变成默认大小的细体。
+**根因（确凿）**：装饰节点 `cover/divider/quote` 为让 `:::` 容器语法被解析，必须注册在 `commonmark` 之前，于是它们成为 schema 中排在最前的 textblock。ProseMirror `splitBlock` 用 `defaultBlockAt()` 取「第一个无必需属性的 textblock」作为 Enter 拆分出的新块类型，结果取到了 `cover`。于是在普通段落末尾按 Enter，会插入一个空 `cover` 节点（渲染成幽灵封面卡片）；序列化后又被 `stripBareDirectives` 清除，所以刷新/预览后消失——与用户描述「编辑器里是卡片、预览是正文、刷新变回正文」完全吻合。
 
-### 2. 代码质量（Chores）
-- 重建 `dist`，发布包与源码同步（三处修复均确认打进构建产物）
+**修复**：新增 `src/plugins/forceParagraphEnter.js`（`$prose` handleKeyDown 插件），在普通文本块按 Enter（无 Shift/Cmd、非标题/代码块/列表）时，强制以 `paragraph` 作为 split 产生的新块类型，绕开 `defaultBlockAt` 误判。插件注册在 `headingEnterFix` 之前，确保普通段落 Enter 优先被拦截。刻意保留 `docDefaultType=cover`（不改动 schema 顺序与 attrs），以避免破坏 `:::` 解析。已用 puppeteer 真实浏览器复现验证：普通段落 Enter 后 doc 变为 `[heading,paragraph,paragraph,...]`、`covers=0`；标题 Enter→paragraph、列表 Enter、Shift+Enter 软换行、封面卡内 Enter 均不受影响。
 
-### 3. 已知局限（Known Issues）
-- 表格斑马纹在微信后台可能因样式过滤丢失（同 v0.6.0，平台限制）
+### 2. 装饰语法 `::: cover` 编辑器内不渲染（Bug B 根治）
 
----
+**根因**：`remark-directive` 3.x 的容器指令语法是 `:::name`（`:::` 后**无空格**紧跟类型名）。本项目一直写成 `::: cover`（带空格），被 remark-directive 当成普通文本，于是 `:::` 在编辑器里从未被解析成卡片节点（预览却因 `buildHtml.js` 用独立正则能渲染，造成「编辑器中立文字、预览正常」的不一致）。此 bug 此前潜伏，因为唯一的封面卡片来源是上面的 Enter 幽灵块。
 
-## [2026-07-13] 主题选择器 UI 升级：色块视觉 + 自定义下拉（v0.6.1）
+**修复（全链路统一为 `:::cover` 无空格规范语法）**：
+- `insertDecorBlock` 插入 `:::cover` / `:::divider` / `:::quote`（`::: ` + type → `:::` + type）
+- `buildHtml.js` 预览正则改为 `::: ?(\w+)` 同时兼容新旧 `:::cover` / `::: cover`
+- `stripBareDirectives` 裸 `:::` 检测修正：原正则只认 `::: 类型`（带空格）为合法开标签，会把无空格的 `:::cover` 误判成裸 `:::` 删掉；改为 `:::(?:[ \t]+)?(\w+)?` 正确识别两种写法
+- `createDirectiveNode` 的 `parseMarkdown.runner` 修复文本收集：容器指令的子节点是块级节点（paragraph），标题文字在其 `children[].value` 或更深层的 `children` 里，原代码只取顶层 `c.value` 会丢失文字；改为递归收集，封面/金句标题不再丢失
 
-> 🎨 主题下拉从无辨识度的「📐」改为降饱和色块，每个模板一眼可辨；原生 `<select>` 替换为自定义下拉组件。
+验证：加载 `:::cover/:::divider/:::quote` 草稿，编辑器内正确渲染 1 封面 + 1 分割线 + 1 金句卡片；内容上屏（如「封面标题」「金句内容」）正确显示。
 
-### 1. 视觉升级（Visual）
+## [2026-07-20] Bug 修复 + 图片功能移除（v0.13.1）
 
-- **uiAccent 色块**：10 套模板各新增 `uiAccent` 字段——从 h1 强调色经 HSL 降饱和约 40%、提明度约 5% 派生，在淡月光 `#f7f6fa` 底色上柔和而不跳脱。色值示例：经典报业 `#b57373` / 霓虹赛博 `#8ab8e5` / 橘光活力 `#d49070`
-- **自定义下拉组件**：替换原生 `<select>` 为 `.theme-picker` 组件，每行左侧 10px 实心圆点色块 + 模板名称。选中项高亮 `--bg-active`，hover `--bg-hover`
-- **交互细节**：三角箭头展开/收起旋转动画（180°）；点击外部自动关闭（`@blur` 监听）；`@mousedown.prevent` 防止吞事件
+> 🔧 代码审查修复、图片操作 Bug 根治、图片功能移除、样式面板修复、金句卡片修复。
 
-### 2. 代码质量（Chores）
+### 1. 代码审查 Bug 修复（Fixed）
 
-- **数据结构驱动**：`THEME_NAMES` + `THEMES` 统一管理，新增模板只需在 THEMES 对象加条目，下拉自动渲染，不会再次出现「数据有了 UI 没跟上」的问题
-- **样式独立模块**：`.theme-picker-*` 全家桶独立于 `.notion-select`，互不污染
+- 三处 `nextTick` 缺 `isSettingEditor`：`insertImage` / `updateImageWidth` / `setHeadingLevel`，修复 history 栈污染和预览不同步
+- 图片宽度调整变乱码 Bug 根治：`replaceImageInMarkdown` 不再转 HTML `<img>`，宽度信息分离到 `imageWidthMap`，由 `buildHtml` 消费
+- 上下文工具栏图片操作失效：`editorViewCtx.key` → `editorViewCtx`
+- 装饰块插入显示为原始 `:::` 文本：改用 `setEditorMarkdown` 重解析路径
+- Ctrl+S 缺 `saveDraftNow` 调用
+- `useBrand.applyBrand()` 签名错误
+- 大 data URI 正则性能优化
+- AI 选中替换位置不准
+- `isDarkMode` 系统主题响应
+- 编辑器嵌套列表样式补充
+- CSS 重复定义清理
+- `nestedList` 主题去重
+- 空状态深色模式字色
+- 样式滑杆 `@change → @input` 回退 + 移除重做工具栏按钮
+- Ctrl+S toast 文案改进
 
-### 检查官必看
+### 2. 图片功能移除（Removed）
 
-| 验收项 | 预期 |
-|--------|------|
-| 打开样式面板 → 主题下拉 | 颜色圆点 + 模板名，10 个选项全部可见 |
-| 切换模板 | 色块立即跟随变化，文章渲染同步更新 |
-| 点击下拉外部区域 | 下拉自动收起 |
-| 所有 10 个色块颜色 | 柔和、不刺眼、各自可区分 |
-| `vite build` | 零错误退出 |
+- 删除 18 个图片函数 + 3 块 UI + 11 个 ref
+- 原图片上传区替换为 Markdown 语法提示
+- 删除 paste/click 图片事件 handler
+- 上下文工具栏图片行删除
+- 选区轮询中 image 分支删除
+- `buildHtml` Post-process C 保留为可选（不影响）
 
----
-## [2026-07-13] 视觉瑕疵修复（v0.5.1）
+### 3. 金句卡片修复（Fixed）
 
-> 🐛 修复 v0.5.0 重构后残留的两处与新「淡月光」色彩体系不一致的样式瑕疵，统一回 Token 系统。
+- `markdownUpdated` 增加 `\:::` 转义还原，修复 remark-directive 序列化后预览乱码
 
-### 1. Bug 修复（Fixed）
-- **样式面板分组分隔线引用未定义变量**：`.panel-section` 的 `border-bottom` 使用 `var(--border-color, #ececec)`，但 `--border-color` 从未在 `:root` 定义，导致永远走兜底值 `#ececec`，与全局边框体系（`--border-light: #eceaf2`）脱节。
-  - 改为 `var(--border-light, #eceaf2)`，与边框 Token 统一。
-  - **检查官必看**：样式面板内「整体风格」分组之间的分隔线应为淡紫灰 `#eceaf2`，而非偏暖的 `#ececec`。
-- **拖拽分隔线 hover 残留旧暖灰**：`.resize-handle:hover` 与 `.resize-handle:hover::before` 仍使用 v0.5.0 之前的暖灰调 `#d0cbc0` / `#b0a898`，hover 时会冒出一截与淡紫灰主题冲突的暖米色。
-  - 分别改为 `var(--bg-active, #e8e4f0)` 与 `var(--border-medium, #e3e0ec)`。
-  - **检查官必看**：鼠标移到编辑器与预览之间的拖拽分隔线上，hover 高亮应为淡紫灰调，不再出现暖米色突兀色块。
+### 4. 测试增强（Test）
 
-### 2. 代码质量（Chores）
-- **重建 dist**：发布包与源码同步，已含上述样式修复。
+- 新增：blockquote/li/del/h2/h3/mark 主题数据测试、30s 超时测试
+- 总测试数：26 → 31（+5）
 
----
+### 5. 标题 Enter 行为修正（Fixed → 已修正崩溃）
 
-## [2026-07-10] 界面视觉中度重构（v0.5.0）
+> ⚠️ 初版实现存在致命 bug，本次重新定位根因并修复。
 
-> 🎨 从 Notion 风格演进到更成熟的淡月光设计语言。色彩体系统一、手机预览场景化、图标系统现代化、字体与边框细节精调。
+**根因（崩溃）**：`src/plugins/headingEnterFix.js` 在标题末尾按 Enter 时调用 `$head.after($head.depth - 1)`。
+顶层标题的 `$head.depth === 1`，`after(0)` 试图取「文档根节点之后」的位置——该位置不存在，
+ProseMirror 直接抛 `RangeError: There is no position after the top-level node`。
 
-### 1. 视觉系统（New）
-- **色彩 Token 重构 — 淡月光（Moonlit Lavender）**：页面底色从暖灰 `#f7f6f3` 切换为淡紫灰 `#f7f6fa`，配套 hover / active / border 色系同步更替。整体视觉从「暖旧感」升级为「干净克制」，与品牌名「净排」调性一致。
-  - `--bg-secondary`: `#f7f6f3` → `#f7f6fa`
-  - `--bg-hover`: `#efefef` → `#f0eef6`
-  - `--bg-active`: `#e8e5e0` → `#e8e4f0`
-  - `--border-light`: `#e9e2d8` → `#eceaf2`
-  - `--border-medium`: `#dcdcf0` → `#e3e0ec`
-  - **检查官必看**：页面背景应为轻微紫灰调，不再是暖黄白。工具栏 / 面板边框与底色色彩统一。
-- **手机预览 — 微信文章顶栏**：去掉虚假 iOS notch 状态栏，替换为轻量微信风格标题栏（左箭头 + 标题文字 + 菜单点 `···`），底色 `#ededed`。更真实还原公众号文章在微信内置浏览器中的阅读场景。
-  - 手机框圆角：`24px` → `12px`，降拟物感
-  - 边框：`box-shadow` 大阴影 → `0.5px solid` 细线框
-  - **检查官必看**：打开预览开关，手机框顶部应为微信灰底顶栏，不是之前的黑色 notch 条。圆角大幅缩小，边线更细更干净。
-- **图标系统 — emoji → 内联 SVG 线性图标**：工具栏 10 个功能按钮（AI / 导入 / 样式 / 配图 / 复制 / 清除样式 / 预览 / 导出 / 设置）从 emoji 文字替换为 16×16 内联 SVG 线性图标（`stroke: currentColor`、`stroke-width: 1.75`）。零外部依赖，零额外体积。
-  - `.toolbar-item .icon` 样式从 `font-size: 18px` 改为 `display: flex` 居中布局
-  - 预览按钮图标依据 `showPreview` 状态动态切换（手机开 / 关两种形态）
-  - **检查官必看**：所有工具栏图标应为简洁线性 SVG 风格，颜色跟随 `--text-secondary`，hover / active 态图标无变形。
-- **字体层级收敛（UI chrome）**：UI 控件字号从 9/10/13/18/20px 多档统一为 3 档 — 标签 `11px` / 正文 `12px` / 关闭按钮 `14px`。文章排版字号（17/19/22/32px）不受影响。
-  - `.toolbar-label`: `10px` → `11px`
-  - `.toolbar-section-label`: `9px` → `11px`
-  - `.preview-label` / `.control-label` / `.control-value`: `13px` → `12px`
-  - `.panel-close`: `20px` → `14px`
-  - **检查官必看**：工具栏下方标签文字比之前略大（9→11）、面板关闭 `×` 明显缩小、面板标题与标签字号更统一。
-- **边框 & 圆角细节统一**：
-  - 圆角 Token：`--radius-md: 6px → 8px`、`--radius-lg: 10px → 12px`、新增 `--radius-xl: 16px`
-  - 面板边框（工具栏 / 悬浮面板 / 面板头 / 预览头）`1px` → `0.5px`
-  - **检查官必看**：工具栏右侧分割线、面板边框、预览头分割线比之前细一半，整体更轻盈。
+由于该插件以 `handleKeyDown` prop 形式注册，抛异常会中断整条 keydown 处理链：
+标题末尾 Enter 既不创建段落、也不走默认 splitBlock（连「继承 H1」的默认行为都丢了），
+表现就是「标题后按 Enter 没反应 / 卡在标题里 / 后续 Enter 行为异常」。
+用户感知的「正常段落按 Enter 还是 H1」实为：离开标题的 Enter 崩溃了，用户始终还停留在标题节点内，
+后续在「以为是正文」的标题里按 Enter 命中了标题继承，于是不断冒出 H1。
 
-### 2. 代码质量（Chores）
-- **重建 dist**：发布包与源码同步，已含上述全部改动。
+**修复**：改为 `$head.after($head.depth)`（取标题节点自身之后，对任意层级均合法）。
+- 标题（H1/H2/H3）末尾按 Enter：创建普通段落（已验证，不再崩溃）
+- 标题中间按 Enter：仍拆成两个同级标题（默认 splitBlock）
+- 列表/引用/代码块/正文的 Enter：完全不受影响（插件对 paragraph 直接 `return false`）
+- 复现/回归测试：`tests/appSync.test.js`（完整复刻 App.vue 的 markdown 双向同步回路 + directive 节点 + headingEnterFix，4 项 Enter 行为全部通过）
 
----
+### 6. 装饰节点序列化崩溃修复（Fixed）
 
-## [2026-07-10] 装饰图品牌色派生修复（v0.4.1）
+> 🐞 用户实测：插入**金句卡片 / 封面卡片**后预览出现重复「欢迎使用 净排」、装饰元素错位、占位文本 `点击编辑文字` 变成多余标题、控制台报 `b.addText is not a function`。
 
-### 1. Bug 修复（Fixed）
-- **装饰图品牌色派生函数崩溃**：`_brandShade` 内的 `toHex` 误引用未定义变量 `t`（应为色相参数 `hh`），导致插入封面 / 引用背景等装饰图时直接抛 `ReferenceError`，装饰图完全无法插入。
-  - **检查官必看**：设任意品牌色后插入封面图 / 引用背景，确认不再报错、装饰图正常出现。
-- **品牌色深浅派生计算错误**：`toHex` 调用点对已归一化的饱和度 / 亮度再次 ÷100（函数内部已做归一化），导致派生色饱和度与亮度≈0、近乎纯黑，引用背景变成黑底深灰字、基本不可读。
-  - **检查官必看**：设品牌色（如默认绿 `#07c160`）插入引用，背景应为浅绿底（约 `#e1feef`）而非近黑；渐变封面应为「品牌色 → 更深品牌色」。
-- **引用浅底边界优化**：品牌色偏亮时，浅底亮度被钳到 100% 变成纯白，在微信白底预览 / 导出中"消失"。新增上限 94% 钳制，保证浅底始终是「带品牌色调的浅色」而非纯白。
-  - **检查官必看**：把品牌色设为很亮的颜色，插入引用背景，确认浅底仍带可见的品牌色调，不与页面白底融为一体。
+**根因**：`src/App.vue` 的 `createDirectiveNode` 中，`toMarkdown` runner 错误地调用了 `state.addText(...)`。
+Milkdown 有两套状态：
+- **解析器状态（ParserStack）** 有 `addText` —— `parseMarkdown` 侧用它是对的；
+- **序列化器状态（SerializerStack）** 只有 `openNode / closeNode / addNode / next`，**没有 `addText`**。
 
-### 2. 代码质量（Chores）
-- **清理启动脚本旧品牌残留**：`start.bat` / `start.sh` 的旧 `PodcastPublish` / 🎙️ 文案改为「净排 / 📐」，与产品品牌一致。
-  - **检查官必看**：grep 全仓库 `PodcastPublish` / `🎙️`，应仅在历史 CHANGELOG 文档中出现，运行脚本无残留。
-- **重建 dist**：发布包与源码同步，已含上述全部修复。
+`toMarkdown` 跑在序列化器上，于是插入 `quote`/`cover`（它们走 `type !== 'divider'` 分支、会调用 `addText`）时直接抛
+`TypeError: b.addText is not a function`，整个文档序列化中断、状态被打乱，引发上述一连串渲染异常。
+（分割线 `divider` 因走跳过分支、序列化不崩，但仍被整体崩溃波及。）
+
+**修复**：序列化器里加文本改用 `state.next(node.content)`（递归交由文本节点自行序列化，
+与 Milkdown `preset-commonmark` 的 paragraph `toMarkdown` 写法一致），删除错误的 `state.addText` 调用。
+
+- 回归测试：`tests/bugReproduce.test.js` 新增 `REGRESSION: 金句卡片(quote)` 与 `REGRESSION: 封面卡片(cover)` 两项，断言序列化不抛错且 `::: quote`/`::: cover` 正确往返
+- 全测试套件 10/10 通过，`vite build` 零错误
+
+### 7. 段落 Enter 产生「幽灵装饰块」修复（Fixed → Bug A 根治）
+
+> 🐞 用户实测：正常正文段落末尾按 Enter，新行变成「分割线 / 封面卡片」格式（视觉上像分割线，实为封面卡片——上下边线 + 居中空文字）。
+
+**根因（空段落序列化串台）**：段落末尾按 Enter，`splitBlock` 创建的是**空段落**（正常且正确，光标停在其中）。
+但 Milkdown 的 markdown 序列化器（remark-stringify）有个怪癖：**空段落会被序列化成「裸 `:::`」**（无类型名的空容器指令 `:::` … `:::`）。
+这段含裸 `:::` 的 markdown 进入预览 / 重解析后，被当成装饰节点处理，渲染出封面卡片样式的幽灵块。
+隔离测试证明：**纯文档（完全无装饰节点）按 Enter 同样冒出裸 `:::`**，与装饰实现无关，纯属空段落序列化格式问题。
+
+**为什么看着像封面卡片而非分割线**：裸 `:::` 在重解析后映射到的装饰节点渲染为「上下边线 + 居中 h1（空文字）」，恰好是封面卡片的视觉（上边线 + 字 + 下边线），所以用户先以为是分割线、后确认是封面卡片。
+
+**修复**：在序列化出口处精准剔除裸 `:::` artifact。裸 `:::` 不合法（合法装饰必带 `cover/divider/quote` 类型名），
+新增导出函数 `stripBareDirectives(md)`（`src/buildHtml.js`），用**栈式解析**区分：
+- 带类型名的 `::: type` → 合法开标签，入栈
+- 裸 `:::` 且与栈内开标签配对 → 合法闭合，保留
+- 栈为空时的孤立裸 `:::` → artifact 开标签，删除本行并连同其配对的下一个裸 `:::` 一并删除
+
+> ⚠️ 初版尝试用 `md.replace(/^[ \t]*:::[ \t]*$/gm, '')` 逐行删裸 `:::`，会**误伤合法装饰的闭合定界符**（装饰闭合也是裸 `:::` 行），导致装饰块丢失，已废弃改用栈式。
+
+- 调用点 1：`src/App.vue` 的 `markdownUpdated` 监听器（编辑器→markdownText 唯一出口，含转义还原 + 剔除）
+- 调用点 2：`src/buildHtml.js` 的 `buildHtml` 预处理（覆盖导入 / AI / 直接调用等所有入口，防御性）
+- 回归测试：`tests/serialize-test.test.js` 新增 3 项（观察 cover/divider/quote 序列化形态、Enter 后不应多出封面、纯文档 Enter 隔离），全测试套件 13/13 通过
+
+### 8. 已知限制
+
+- 删除图片后 Ctrl+Z 不可恢复（`replaceAll` 清空 history 栈的固有代价）
 
 ---
 
-## [2026-07-08] 核心信任修复与 UI 精细化（v0.4.0）
+## [2026-07-18] 用户体验架构重构（v0.13.0）
 
-### 1. 新增功能（New）
-- **微信真实预览模式**：新增「预览模式」开关（默认微信真实）。切换「主题氛围」时预览可体验深色/主题背景；复制/导出始终为微信白底，确保所见即所得。主题选择持久化到 `localStorage`，刷新不再回退默认。
-  - **检查官必看**：选「霓虹赛博」深色主题，确认预览氛围是黑底；点「复制 HTML」粘入微信后台，背景是否为白色。
-- **装饰图品牌色跟随**：封面 / 分割线 / 引用背景三种装饰图，现在跟随用户在设置中指定的「品牌主色」生成（自动派生渐变与浅色底）；emoji 卡片保持原样不跟随（点缀色协调）。
-  - **检查官必看**：把品牌色设为红色，插入封面图 / 分割线 / 引用背景，确认颜色是否变为红色系。
-- **装饰图 PNG 栅格化**：插入装饰图时自动经 canvas 转为 PNG data-URI 再写入预览与导出 HTML，彻底解决微信后台 SVG 不兼容导致的装饰图丢失问题；栅格化失败时兜底保留 SVG。
-  - **检查官必看**：插入封面图后导出 HTML，双击打开或粘入微信后台，确认装饰图正常显示。
+> 📐 全链路 UX 架构重设计：工具栏任务流重组、新手 Onboarding、上下文工具栏、状态栏增强、模块拆分、AI 场景化推荐、Bug 修复。
 
-### 2. UI/UX 调整（Changed）
-- **主题入口移至样式面板**：主题下拉 + 预览模式开关从底部 ⚙️ 设置移入 🎨 样式调节面板顶部（作为「整体风格」分组），符合「找主题→点样式调节」的心智模型，入口不再藏底。
-  - **检查官必看**：点工具栏 🎨 图标，面板最上方是否为「整体风格」分组（含主题下拉和预览模式开关）。
-- **悬浮面板改为 push 模式**：桌面端（≥769px）打开样式 / 配图等面板时，主内容区右移让出 300px 宽度，编辑器和预览完整露出，不再遮挡。
-  - **检查官必看**：打开「样式」面板，确认左侧编辑器和右侧预览均未被面板盖住，可同时操作与实时查看。
-- **消除两个预览按钮语义重叠**：删除工具栏 👁️「切换预览位置」按钮（预览区头部 segment 已有左/右/关三档）；工具栏只保留一个 📱/📵 预览显隐开关。
-  - **检查官必看**：工具栏是否只剩一个预览按钮；预览头部 segment 的左/右/关三档是否正常工作。
-- **工具栏常驻文字标签**：桌面端图标下方新增 10px 灰色小字标签（AI / 导入 / 样式 / 配图 / 复制 / 清除样式 / 预览 / 导出 / 设置），并以「编辑」「视图」灰色段组标题分隔；移动端维持 icon-only。
-  - **检查官必看**：桌面端工具栏每行图标下方是否均有小字；移动端是否恢复纯图标。
-- **状态栏信息合并**：删除「内容只存在你的浏览器」和「纯本地运行·无需登录·文章不出本机」两行冗余文字，合并为「🔒 已保存 · 内容仅存本机」单一状态行，桌面/移动端一致显示。
-  - **检查官必看**：底部状态栏是否为一行简洁文字，内容是否同时表达保存状态和隐私承诺。
-- **两套绿色统一**：`--accent-green: #238852` → `#07c160`，与装饰图 SVG 颜色基准统一，消除界面绿色不一致。
-  - **检查官必看**：确认界面强调色（如成功提示、选中态边框）与装饰图绿色为同一色调。
-- **辅助文字对比度 WCAG AA**：`--text-tertiary: #9b9a97` → `#6b6b6b`，对比度从 ~2.8:1 提升至 ~5.3:1（达 WCAG AA 标准），`.panel-tip`、`.empty-hint` 等小字可读性改善。
-  - **检查官必看**：辅助说明小字在白底上是否清晰可读，无模糊感。
-- **工具栏无障碍**（WCAG AA）：9 个工具栏按钮全部加 `role="button"` + `aria-label`；新增 `:focus-visible` 绿色轮廓（Tab 聚焦时可见）；屏幕阅读器可识别每个按钮意图。
-  - **检查官必看**：Tab 键聚焦工具栏按钮时，是否有清晰可见的绿色轮廓。
+> **来源**：`docs/PRD/用户体验架构重构.md` + `docs/design/UX架构实施计划.md` + `docs/design/ADR-图片操作管线修复.md` + `docs/design/Review-2026-07-18.md`
 
-### 3. 代码质量（Chores）
-- **清理 Unsplash 残留死代码**：删除 `.image-grid` / `.image-item` / `.image-overlay` / `.skeleton-grid` / `.error-state` / `@keyframes shimmer` / `.loading-state` 等约 80 行已无引用的 CSS，全文件零残留。
-  - **检查官必看**：grep 搜索 `image-grid`、`skeleton`、`error-state`，应无任何匹配。
+### 1. 工具栏任务流重组（Changed）
 
-### 4. 待修复隐患（Known Issues）
-- **装饰图 PNG canvas 栅格化**（本次已修复 v0.2.0 已知项）：经 canvas 栅格化后的 PNG data-URI 已替代 SVG，彻底解决微信后台粘贴丢失问题；emoji 字体渲染在某些 Android 机型微信内核可能略有差异，需留意。
-  - **检查官必看**：在真实微信后台粘贴含装饰图的 HTML，重点观察 emoji 卡片的 emoji 渲染是否正常。
-- AI 浏览器直连 CORS（同 v0.3.0 已知项）：DeepSeek / OpenAI 默认可能禁止浏览器跨域；推荐使用 OpenRouter 预设。
-  - **检查官必看**：若 AI 调用报 CORS 错误，切换为 OpenRouter 预设重试。
+- 左侧工具栏从「按实现顺序排列」重排为 5 个任务区：
+  - 写作区：撤销 · 重做 · 导入
+  - 排版区：样式 · 装饰/图片
+  - 增强区：AI 写作
+  - 发布区：预览 · 复制 · 导出
+  - 系统区：清除样式 · 设置 · 外观
+- 每个任务区有 `.toolbar-group-label` 小标签，组间用 1px 分隔线
 
----
+### 2. 新手 Onboarding 四步引导（New）
 
-## [2026-07-08] 移动端适配与 AI 闭环更新（v0.3.0）
+- 首次使用弹出引导浮层：写作 → 主题 → 发布 → 功能标签云
+- 完成后自动载入示例文章；跳过标记 `podcast_settings.onboardingDone`
 
-### 1. 新增功能（New）
-- **移动端窄屏适配**：≤768px 时左侧工具栏变底部横条；浮动面板全宽；预览区变为全屏覆盖层（由「👁 预览」浮钮或工具栏切换）；移动端默认隐藏预览。
-  - **检查官必看**：用 320px 宽视口打开，确认工具栏沉底、面板全宽、首屏不被全屏预览盖住；点「预览」可正常切换。
-- **导出增强**：左侧工具栏底部新增 📤 + 导出面板，支持下载带样式 `.html` / 下载 `.md` / 一键打开微信后台。
-  - **检查官必看**：下载的 `.html` 双击打开样式是否完整；`.md` 是否成功下载；「打开微信」是否新标签跳转 `mp.weixin.qq.com`。
-- **品牌色一键重染**：设置面板新增「品牌主色」取色器 + 「正文字体」下拉，存 `podcast_brand`；按品牌色重染标题 / 链接 / 引用，字体全局生效。
-  - **检查官必看**：设一个主色后，标题 / 链接 / 引用分割线是否同步变色；再点「套用全部」确认品牌色不被清掉。
-- **AI 写作助手**：左侧工具栏顶部新增 🤖 + AI 面板；用户填自己的 key（只存本机 `podcast_ai_config`），预设 DeepSeek / OpenAI / OpenRouter / 自定义；支持生成标题 / 写摘要 / 扩写 / 一键结构化排版，原生 fetch 直连。
-  - **检查官必看**：填入 OpenRouter key 后点「生成标题」是否返回内容；无 key 时是否提示「请先填 Key」而不报错。
+### 3. 顶部上下文工具栏（New）
 
-### 2. UI/UX 调整（Changed）
-- **工具栏布局调整**：顶部新增 🤖（AI）/ 📥（导入），底部新增 📤（导出），各面板独立开合。
-  - **检查官必看**：依次打开 AI / 导入 / 导出 / 样式 / 配图面板，确认互不遮挡、关闭逻辑正常。
+- 编辑器上方 `.context-bar`，根据选区动态显示操作：
+  - **图片**：宽度拖杆 · 替换 · 删除（通过已有 `editingImage` 体系驱动）
+  - **标题**：H1/H2/H3 快速设置
+  - **文字(≥10字)**：⚡扩写 · 🔄改写 · 🌐翻译
+- 新增 `aiRewrite`、`aiTranslate`、`runAiAction` 函数
 
-### 3. 待修复隐患（Known Issues）
-- **AI 浏览器直连 CORS**：DeepSeek / OpenAI 默认可能禁止浏览器跨域，调用报 CORS 错误。
-  - **检查官必看**：用 DeepSeek 预设实测是否出现 CORS 报错；改用 OpenRouter 预设是否顺畅（OpenRouter 明确支持浏览器跨域）。
-- 装饰图 SVG 在微信的兼容性（同 v0.2.0 已知项，移动端同样存在）。
-  - **检查官必看**：移动端插入装饰图后粘入微信，确认显示情况。
+### 4. 底部状态栏增强（Changed）
 
----
+- 新增字数统计、预估阅读时长、AI 写作中 spinner
+- 新增 `wordCount`、`readTime` computed
 
-## [2026-07-08] 配图本地化与内容导入更新（v0.2.0）
+### 5. 模块拆分（Refactor）
 
-### 1. 新增功能（New）
-- **配图纯本地化**：删掉必失败的 `/api/unsplash` 代理；配图面板改为「本地装饰图」（SVG 生成渐变封面 / 分割线 / emoji 卡片 / 引用背景，data-URI 插入）+「粘图片链接」两区，全程不联网。
-  - **检查官必看**：断网状态下点任意装饰图能否插入预览；粘贴一个外部图片 URL 能否成功插入。
-- **🚀 全文一键套用主题**：样式面板 header 新增「套用全部」按钮，一键清空手调样式、把当前主题铺满全文。
-  - **检查官必看**：手动改 h1 / p 等若干标签样式后点「套用全部」，确认全文回归主题纯净态。
-- **📥 导入并提取正文**：左侧工具栏顶部新增 📥 按钮 + 导入面板；粘贴带格式 HTML / 网页正文，自动 strip 内联样式并转成干净 Markdown 填入编辑器（依赖 `turndown`）。
-  - **检查官必看**：粘入一段含 `<font>`/`<span style>` 的网页 HTML，点「从文本提纯」，确认得到干净 Markdown 且无垃圾标签。
+- **composables**：`useDraft.js`（草稿）、`useBrand.js`（品牌色）、`useStyle.js`（样式逻辑）
+- **components**：`PreviewPanel.vue`、`AIPanel.vue`、`StylePanel.vue`、`ExportPanel.vue`、`SettingsPanel.vue`
+- App.vue：4022 → 3717 行（净减 305 行）
 
-### 2. UI/UX 调整（Changed）
-- **配图面板重构**：从「关键词搜索框」改为「本地装饰图 + 粘链接」两区，移除原来的「搜索失败」错误态。
-  - **检查官必看**：打开配图面板，确认不再出现「图片搜索失败」提示，且两区布局正常。
+### 6. AI 面板场景化推荐（Changed）
 
-### 3. 待修复隐患（Known Issues）
-- 微信后台对 SVG 装饰图（封面 / 分割线）粘贴兼容性有限，可能不显示。**（v0.4.0 已修复：改为 PNG 栅格化输出）**
-  - **检查官必看**：将导出的 HTML 粘入微信后台，验证装饰图是否正常显示（emoji 卡片类纯文本不受影响）。
+- 4 个平铺按钮 → 智能推荐（无内容→标题、长文→摘要+结构化、短文→扩写+结构化）
+- 其余操作折叠在「更多操作」中，由 `aiRecommendations` computed 驱动
 
----
+### 7. 面板上下文保持（Changed）
 
-## [2026-07-08] 品牌确立与基础体验更新（v0.1.0）
+- 6 个浮动面板 `v-if` → `v-show`，切换时 DOM 不销毁、状态不丢失
 
-### 1. 新增功能（New）
-- **本地自动存稿**：输入框内容实时写入 `localStorage`（key `podcast_draft`），底栏新增常驻状态条显示「🔒 已自动保存」与相对时间（刚刚 / N 分钟前）。
-  - **检查官必看**：打开浏览器 DevTools → Application → LocalStorage，边输入边观察 `podcast_draft` 是否实时更新；刷新页面后内容是否完整恢复。
-- **🧹 清除内联样式**：左侧工具栏「复制 HTML」正下方新增按钮，一键 strip 粘贴带来的 `style/class` 属性与 `<font>/<span>` 包裹，回归干净语义标签。
-  - **检查官必看**：从 Word / 网页复制一段带行内样式的文本粘入编辑器，点击该按钮后，预览区样式是否回归干净。
-- **复制 HTML 兜底**：`ClipboardItem` 不可用时，降级为选中 `.phone-content` 富文本 `execCommand('copy')` 复制。
-  - **检查官必看**：在 Firefox 或禁用异步剪贴板的环境点击「复制 HTML」，确认仍能粘进微信后台且样式在。
+### 8. 图片插入管线修复（Fixed）
 
-### 2. UI/UX 调整（Changed）
-- **品牌重命名「净排」**：🎙️ → 📐；`index.html` 标题改为「净排 — 纯本地公众号排版工具」；`package.json` name 改为 `jingpai`；默认示例文案与空状态文案全部替换旧的「播客精华」残影。
-  - **检查官必看**：全局搜索 `PodcastPublish` / `播客精华` / 🎙️，确认无残留；首屏标题与空状态是否为净排口径。
-- **自动保存露出文案**：检测到旧草稿时弹出「欢迎回来」恢复横幅（10s 自动收起）+ 底栏隐私说明「内容只存在你的浏览器」。
-  - **检查官必看**：清空草稿后重新输入、关闭重开，是否弹出「欢迎回来」横幅；底栏状态条相对时间是否随保存跳动。
+- `insertImage`：`insertText("![alt](url)")` → `replaceSelectionWith(imageNode)`
+  - 根因：`insertText` 不触发 Milkdown Markdown 解析器，base64 data URL 显示为乱码
 
-### 3. 待修复隐患（Known Issues）
-- 旧 `dist` 主包曾因 THEMES 的 `font-family` 用双引号包裹被截断（正文变黑、无边距），已在源码修复并重建；若部署旧包需注意。
-  - **检查官必看**：用最新 `dist` 打开，确认四套主题正文均带正确字体与边距；不要部署修复前的旧包。
+### 9. 上下文工具栏图片删除修复（Fixed）
+
+- 委托给已有 `deleteEditingImage()` / `replaceEditingImage()`（Markdown 文本路径，已验证可用）
+- 图片点击检测由 `onImageClick`（DOM click event）驱动，不再依赖 ProseMirror 选区轮询
+
+### 10. 代码审查 Bug 修复（Fixed）
+
+- `getEditorView`/`setHeadingLevel`/选区轮询：`editorViewCtx.key` → `editorViewCtx`（修复上下文工具栏图片操作失效）
+- `insertDecorBlock`：`insertText('::: ...')` → `setEditorMarkdown()` 重解析路径（修复装饰块插入后显示为原始文本）
+- CSS 重复定义清理：`.preview-btn.active` 定义 3 遍含语法破损 → 整段删除
+- Ctrl+S 快捷键：新增 `saveDraftNow()` 调用（之前只保存设置不保存草稿）
+- `useBrand.applyBrand()` 签名修复：`applyBrandToTheme(branded, '#fff', 'serif')` → `applyBrandToTheme(branded, { color: ..., font: ... })`
+- 大 data URI 正则性能：超过 2000 字符的 data URI 跳过精确匹配，直接模糊匹配
+- AI 选中替换：新增 `getSelectedMarkdown()` + `replaceSelectedWith()` 基于 ProseMirror serializer 的精确替换
+- `isDarkMode` 系统主题响应：新增 `systemDark` ref + matchMedia change 监听器
+- `useDraft` JSDoc：补充 setup() 期间调用的使用约束
+- 编辑器嵌套列表样式补充
+- `router` 死 import 删除（`@milkdown/plugin-history` 无此导出）
+- `getEditorMarkdownOffset` 光标偏移：`lastIndexOf` → ProseMirror `selection.from` 直接取值
+- `buildHtml` XSS 防护：导入 DOMPurify，新增 `options.sanitize` 参数
+- 30s 超时测试：用 `vi.advanceTimersByTimeAsync(30000)` 替代 30s 真实等待
+- AI 标题 prompt 加固：加"不要引号"约束，strip 规则覆盖引号
+- `useStyle.getDefaultStyle`：硬编码颜色/字号 → 从 `THEMES.serif_news` 动态解析
+- `nestedList` 去重：删除 `mellow_pink` 显式定义，统一用 `DEFAULT_NESTED_LIST`
+- 空状态字色：`.phone-content` 硬编码 `#3e3e3e` → CSS 变量
+- 样式滑杆性能：`@input` 分离为值更新 + `@change` 触发重算
+- 主题下拉 blur：`@blur` → `@focusout`（冒泡版本，更可靠）
+
+### 11. 图片操作 Bug 专项修复（Fixed）
+
+- **Bug #1（宽度调整变乱码）**：`replaceImageInMarkdown` 不再转 HTML `<img>`，宽度改存 `imageWidthMap`（src → width 映射表），由 `buildHtml` 在生成预览/导出时消费
+  - `updateImageWidth`：放弃 ProseMirror `setNodeMarkup` 路径，改为直接更新 `imageWidthMap` + 刷新预览
+  - `commitImageEdit`：统一走 `imageWidthMap`，不再输出 HTML `<img>`
+  - `deleteEditingImage`：删除图片时同步清理 `imageWidthMap`
+  - `renderHtml`：传递 `imageWidthMap` 给 `buildHtml`
+  - `buildHtml` Post-process C：从 `imageWidthMap` 注入 `<img width>`
+- **Bug #2（Ctrl+Z 撤销不工作）**：`insertImage` 的 `nextTick` 回调加 `isSettingEditor` 围栏，阻止 sync watcher 执行 `replaceAll` 覆盖 history 栈
+- **Bug #3（`updateImageWidth` 不同步）**：同上 `isSettingEditor` 围栏修复
+- **Bug #4（`setHeadingLevel` 预览不更新）**：新增 `nextTick` + `isSettingEditor` 同步 `markdownText`
+- **拖拽区边框闪烁**：`onDragLeave` 增加 `currentTarget.contains(relatedTarget)` 检查
+
+### 12. 测试增强（Test）
+
+- `callAI.test.js`：新增 30s 超时测试（+1）
+- `buildHtml.test.js`：新增 blockquote/li/del/h2/h3 + mark 主题数据测试（+4）
+- 总测试数：26 → 31（+5）
 
 ---
 
-## 版本约定
-- 版本号语义：v0.x.0 为持续迭代期，每完成一批用户任务即递增 minor。
-- 所有功能保持纯前端、不联网、内容不入库；任何引入后端的方案需单独评估并标注。
-- 每条更新均附「检查官必看」，作为交付前的自测验收清单。
+## [2026-07-18] 组件拆分（v0.13.1）
+
+> 📦 面板组件化 + composable 提取，App.vue 净减 305 行。
+
+### 模块拆分（Refactor）
+- **composables**：`useDraft.js`（草稿）、`useBrand.js`（品牌色）、`useStyle.js`（样式逻辑）
+- **components**：`PreviewPanel.vue`、`AIPanel.vue`、`StylePanel.vue`、`ExportPanel.vue`、`SettingsPanel.vue`
+- App.vue：4022 → 3717 行
+
+---
+
+## [2026-07-17] UI 体验优化 + 本地图片 + 图片编辑（v0.12.0）
+
+> 🎨 UI 细节大迭代：深色模式编辑器变暗、空状态引导增强、本地图片上传（文件选择/拖拽/粘贴）、图片点击编辑（alt/宽度/替换/删除）。
+
+### 1. 深色模式：编辑器区域随模式变暗（Changed）
+
+- **编辑器也变暗**：之前深色只作用于外壳（工具栏/面板），编辑器始终白底。现根据 `isDarkMode` 计算属性，深色模式下编辑器用 `#1e1e1e` 暗底 + `#d4d4d4` 浅色文字，与外壳融为一体。
+- 预览区 `.phone-content` 显式 `background: #ffffff` 钉死白底，深色外壳不穿透。
+- `.ProseMirror` 深色模式文字色适配。
+
+### 2. 深色模式全量 token 审计（Fixed）
+
+- 扫描全部 CSS 硬编码颜色，修复 6 处残留：
+  - `.phone-wechat-bar` 微信模拟顶栏：深色模式改用 `#3c3c3c` 暗底
+  - `.wechat-title` 文字色深色适配
+  - WeChat 图标 SVG `stroke` 深色模式适配
+  - `.phone-frame` 深色模式阴影增强
+  - `color: var(--text-secondary, ...)` 等 fallback 值保持
+
+### 3. 空状态首屏引导增强（New）
+
+- 空状态从「✍️ 在左侧写点什么」升级为完整引导：
+  - "开始创作你的公众号文章" 标题
+  - 功能标签云：🎨 10 套主题 / 🖼️ 装饰元素 / 🤖 AI 辅助 / 🔒 纯本地
+  - **「载入示例文章」** 按钮，一键调用 `loadSampleArticle` 填充 `DEFAULT_CONTENT`
+- 优化空状态排版间距、图标大小、按钮样式。
+
+### 4. 复制/跳转微信引导文案增强（Changed）
+
+- 复制成功 toast：「去微信后台粘贴 → 封面/分割线/金句自动生效，图片需在微信素材库上传」
+- 打开微信后台 toast 同步增强，提示装饰/图片表现。
+
+### 5. 本地图片上传（New）
+
+- **装饰面板**新增 3 种本地图片源入口：
+  - 📁 **文件选择器**：点「选择本地图片」按钮弹出文件选择框
+  - 🎯 **拖拽放置区**：虚线框区域，支持 JPG/PNG/GIF/WebP
+  - 📋 **剪贴板粘贴**：编辑器内 Ctrl+V 自动捕获剪贴板的图片
+- 图片用 `FileReader.readAsDataURL()` 转为 base64，插入 Milkdown 编辑器
+- 大小限制 10MB，类型校验
+- 复制时 toast 提示需在微信素材库上传
+
+### 6. 图片插入后闭环操作（New）
+
+- **图片点击选中**：点击 ProseMirror 编辑区内的图片 → 蓝色选中框 → 弹出「图片编辑」面板
+- **替代文本编辑**：修改 `![alt]` 中的 alt 文字
+- **显示宽度调整**：滑块 10%~100%，点击「应用」写入 `<img width="...">`
+- **替换图片**：选新文件替换当前图片
+- **删除图片**：一键从 Markdown 源移除
+- 图片匹配算法支持超长 data:URI 模糊匹配（取末尾 50 字符特征）
+- 分步提交模式（滑块不触发全文替换），避免编辑抖动
+
+### 7. Bug 修复（Fixed）
+
+- 重复插入图片（拖拽/文件选择器）时避免重复触发
+- 移动端工具栏覆盖编辑区 → 改用 `.mobile-toolbar` 底部横向布局
+- Paste 事件防循环：设置 `isSettingEditor` 标志避免 `markdownUpdated` 监听器回写
+- 装饰块首屏稳定性（`milkdown-decor-*` 卡片渲染率 100%）
+- 分隔线拖拽改 Pointer Events（触屏可用+防止页面滚动）
+
+### 8. Bug A「按 Enter 编辑器冒出封面卡片」—— 纠正与最终根治（Fixed）
+
+> ⚠️ 本节取代此前对 Bug A 的所有错误归因（包括「isFromEditor guard 阻断同步」与「AST 插件降级裸 :::」两条错误路径）。
+> 真实根因由浏览器 `[DIAG]` 诊断日志坐实。
+
+- **现象**（用户实测）：正文段落按 Enter，编辑器内显示为封面卡片样式，但预览区是干净正文；**刷新页面后封面卡片消失变回正文**。
+- **真实根因（种子链，经 Node 探针确认 misparse 为浏览器特有行为）**：
+  1. **种子来源** = `insertDecorBlock()` 插入的 `\n::: cover\n点击编辑文字\n:::\n`，其中「点击编辑文字」是占位文字块。
+  2. 文档里再出现一个**裸 `:::`**（浏览器 remark-directive 对空段落/容器的序列化怪癖），二者相邻会被
+     **misparse 成真 `cover` 节点**；该节点序列化后又产出裸 `:::`，形成**自我循环**，编辑器不断冒封面卡片。
+  3. 诊断日志 `editorDoc` 出现 `"cover":"111"` 即此——`111` 是用户打字内容被误吸进 cover 节点。
+  4. `stripBareDirectives()` 只删裸 `:::`，但把 `::: cover\n点击编辑文字\n:::` 当成**合法装饰放行**（命名开标签+裸闭合配对），
+     故种子块原样进入解析器 → misparse。刷新后草稿被重新保存成「能被中和」格式 + DEFAULT_CONTENT 无种子 → 正常。
+- **已推翻的错误路径**（留痕，避免重复踩坑）：
+  - ❌ 「isFromEditor guard 阻断同步回路」——日志显示 syncWatch 实际执行了 replaceAll，且 Node 测试证明 Enter 只产生空段落、无 decor 节点。
+  - ❌ 「AST 插件 `stripBareDirectiveRemark` 降级裸 :::」——AST 插件在解析**之后**运行，误判已在解析阶段发生，拦不住。
+- **最终修复（三处协同，从种子源头切断）**：
+  1. **`insertDecorBlock()` 改为插入空封面/金句**：`\n::: cover\n\n:::\n`（不含占位文字），序列化即 `::: cover\n\n:::`、无任何内部文本，**不再产生 misparse 种子**。占位提示「点击编辑文字」改由 CSS `.milkdown-decor-cover h1:empty::before` / `.milkdown-decor-quote:empty::before` 渲染。
+  2. **`stripBareDirectives()` 中和种子块**：在栈式剔除前新增预处理，把 `::: (cover|divider|quote)\n点击编辑文字\n:::`（含转义变体)整体删除。该函数被**四个解析入口共用**（defaultValueCtx / 首屏 replaceAll / 同步 watch / setEditorMarkdown），加载/首屏/同步/插入全中和。
+  3. **删除无效插件** `src/plugins/stripBareDirectiveRemark.js`（AST 阶段运行，无法阻止解析期 misparse），并移除 `App.vue` 的 import 与 `.use()` 注册。`normalizeStaleWelcome(md)` 简化为直接复用 `stripBareDirectives(md)`。
+- **测试**：全量 **51/51 通过**（`tests/editor-parse-entry.test.js` 锁定「种子块被中和 / 裸 ::: 进解析器前消失 / 真实内容封面保留」；`tests/serialize-test.test.js` 改用真实内容封面以匹配新行为）。
+

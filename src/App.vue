@@ -8,254 +8,295 @@
       </div>
     </Transition>
 
+    <!-- 新手引导浮层 -->
+    <Transition name="fade">
+      <div v-if="showOnboarding" class="onboarding-overlay">
+        <div class="onboarding-card" role="dialog" aria-modal="true" aria-label="新手引导">
+          <!-- 步骤指示器 -->
+          <div class="onboarding-steps">
+            <span
+              v-for="s in 4" :key="s"
+              class="onboarding-dot"
+              :class="{ active: onboardingStep === s, done: onboardingStep > s }"
+            ></span>
+          </div>
+
+          <!-- 步骤 1：写作 + 预览 -->
+          <div v-if="onboardingStep === 1" class="onboarding-body">
+            <div class="onboarding-icon">✍️</div>
+            <h3>用 Markdown 写作，实时预览公众号样式</h3>
+            <p>左边写 Markdown，右边手机框里就是公众号发布后的样子，所见即所得。</p>
+          </div>
+
+          <!-- 步骤 2：选主题 -->
+          <div v-if="onboardingStep === 2" class="onboarding-body">
+            <div class="onboarding-icon">🎨</div>
+            <h3>10 套主题，一键铺满全文</h3>
+            <p>点击左侧「外观」选主题，排版风格一步到位。字体、配色、间距，全自动搞定。</p>
+          </div>
+
+          <!-- 步骤 3：复制发布 -->
+          <div v-if="onboardingStep === 3" class="onboarding-body">
+            <div class="onboarding-icon">📋</div>
+            <h3>复制 HTML，粘贴微信即发布</h3>
+            <p>点「复制 HTML」→ 去微信后台粘贴 → 封面/分割线/金句全部自动生效。</p>
+          </div>
+
+          <!-- 步骤 4：功能一览 -->
+          <div v-if="onboardingStep === 4" class="onboarding-body">
+            <div class="onboarding-icon">🚀</div>
+            <h3>净排为你准备了这些好用的功能</h3>
+            <div class="onboarding-tags">
+              <span class="onboarding-tag">🎨 10 套主题</span>
+              <span class="onboarding-tag">🖼️ 装饰元素</span>
+              <span class="onboarding-tag">🤖 AI 写作</span>
+              <span class="onboarding-tag">📋 一键复制</span>
+              <span class="onboarding-tag">🔒 纯本地</span>
+              <span class="onboarding-tag">📱 手机预览</span>
+            </div>
+          </div>
+
+          <!-- 操作按钮 -->
+          <div class="onboarding-actions">
+            <button
+              v-if="onboardingStep < 3"
+              class="onboarding-next"
+              @click="onboardingStep++"
+            >下一步</button>
+            <button
+              v-if="onboardingStep === 3"
+              class="onboarding-next"
+              @click="onboardingStep++"
+            >看看还有什么 ▸</button>
+            <button
+              v-if="onboardingStep === 4"
+              class="onboarding-next onboarding-done"
+              @click="finishOnboarding"
+            >开始创作</button>
+            <button class="onboarding-skip" @click="skipOnboarding">跳过引导</button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- 快捷键帮助浮层 -->
+    <Transition name="panel-slide">
+      <div v-if="showShortcuts" class="shortcuts-overlay" @click.self="showShortcuts = false">
+        <div class="shortcuts-card" role="dialog" aria-modal="true" aria-label="键盘快捷键">
+          <div class="panel-header">
+            <h3>键盘快捷键</h3>
+            <button @click="showShortcuts = false" class="panel-close" aria-label="关闭">×</button>
+          </div>
+          <div class="panel-content">
+            <ul class="shortcuts-list">
+              <li><kbd>⌃</kbd> + <kbd>⇧</kbd> + <kbd>C</kbd><span>复制 HTML 到剪贴板</span></li>
+              <li><kbd>⌃</kbd> + <kbd>⇧</kbd> + <kbd>P</kbd><span>切换预览</span></li>
+              <li><kbd>⌃</kbd> + <kbd>S</kbd><span>保存草稿到本机</span></li>
+              <li><kbd>⌃</kbd> + <kbd>Z</kbd><span>撤销</span></li>
+              <li><kbd>⌃</kbd> + <kbd>/</kbd><span>打开 / 关闭本帮助</span></li>
+            </ul>
+            <p class="panel-tip">编辑器内 Ctrl/Cmd+B 加粗、+I 倾斜等 Markdown 快捷键由编辑器原生支持，此处不再重复。</p>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <!-- 左侧图标工具栏 -->
     <div class="left-toolbar">
       <div class="toolbar-brand">
         <span class="brand-icon">📐</span>
       </div>
-      
-      <!-- AI 区 -->
-      <div
-        class="toolbar-item"
-        role="button"
-        :class="{ active: activePanel === 'ai' }"
-        @click="togglePanel('ai')"
-        title="AI 写作"
-        aria-label="AI 写作"
-      >
-        <span class="icon"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9.813 1.5l-.433 1.3c-.139.416-.208.624-.33.795a1 1 0 01-.327.27c-.152.075-.372.075-.812.075h-.155c-.376 0-.565 0-.71-.05a1 1 0 01-.618-.454c-.082-.155-.105-.348-.15-.733L6.187 1.5"/><path d="M12.454 3.085l-1.095.72c-.35.23-.525.346-.62.51a1 1 0 00-.12.423c-.005.183.082.386.256.79L11 5.833"/><path d="M2.5 7.5l.62 1.86c.102.305.152.458.055.542C3.077 9.985 2.923 9.985 2.725 9.985H2.5"/><circle cx="8" cy="13" r="2.5"/><path d="M10.748 3.332l.683.641c.163.153.24.28.28.43a.8.8 0 01-.023.374c-.041.149-.16.314-.396.643l-.117.163"/></svg></span>
-        <span class="toolbar-label">AI</span>
-        <span class="tooltip">AI 写作</span>
+
+      <!-- ===== 写作区 ===== -->
+      <div class="toolbar-group">
+        <span class="toolbar-group-label">写作</span>
+        <!-- 撤销（放明面上） -->
+        <div
+          class="toolbar-item"
+          role="button"
+          @click="milkdownEditor?.action(undoCommand())"
+          title="撤销 (Ctrl+Z)"
+          aria-label="撤销"
+        >
+          <span class="icon"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h7a3 3 0 0 1 0 6H7M4 5l2.5-2.5M4 5l2.5 2.5"/></svg></span>
+          <span class="toolbar-label">撤销</span>
+          <span class="tooltip">撤销 (Ctrl+Z)</span>
+        </div>
+        <!-- 导入 -->
+        <div
+          class="toolbar-item"
+          role="button"
+          :class="{ active: activePanel === 'import' }"
+          @click="togglePanel('import')"
+          title="导入文章"
+          aria-label="导入文章"
+        >
+          <span class="icon"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 10v1a3 3 0 01-3 3H5a3 3 0 01-3-3v-1"/><polyline points="4.5 7.5 8 11 11.5 7.5"/><line x1="8" y1="11" x2="8" y2="2"/></svg></span>
+          <span class="toolbar-label">导入</span>
+          <span class="tooltip">导入文章</span>
+        </div>
       </div>
 
-      <div class="toolbar-divider"></div>
-      <div class="toolbar-section-label">编辑</div>
-
-      <!-- 编辑区 -->
-      <div
-        class="toolbar-item"
-        role="button"
-        :class="{ active: activePanel === 'import' }"
-        @click="togglePanel('import')"
-        title="导入文章"
-        aria-label="导入文章"
-      >
-        <span class="icon"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 10v1a3 3 0 01-3 3H5a3 3 0 01-3-3v-1"/><polyline points="4.5 7.5 8 11 11.5 7.5"/><line x1="8" y1="11" x2="8" y2="2"/></svg></span>
-        <span class="toolbar-label">导入</span>
-        <span class="tooltip">导入文章</span>
+      <!-- ===== 排版区 ===== -->
+      <div class="toolbar-group">
+        <span class="toolbar-group-label">排版</span>
+        <!-- 外观（主题 + 品牌 + 微调 统一面板） -->
+        <div
+          class="toolbar-item"
+          role="button"
+          :class="{ active: activePanel === 'appearance' }"
+          @click="togglePanel('appearance')"
+          title="外观：主题 / 品牌 / 微调"
+          aria-label="外观：主题、品牌、微调"
+        >
+          <span class="icon"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.5"/><path d="M12.5 3c.35.45.7.95 1 1.5M3.5 3c-.35.45-.7.95-1 1.5"/><path d="M2.5 12c.32-.45.67-.86 1.05-1.24M13.5 12c-.32-.45-.67-.86-1.05-1.24"/><path d="M13.5 4c-.32.45-.67.86-1.05 1.24M2.5 4c.32.45.67.86 1.05 1.24"/></svg></span>
+          <span class="toolbar-label">外观</span>
+          <span class="tooltip">外观：主题 / 品牌 / 微调</span>
+        </div>
+        <!-- 装饰元素（B1 解耦：纯装饰，与图片无关） -->
+        <div
+          class="toolbar-item"
+          role="button"
+          :class="{ active: activePanel === 'image' }"
+          @click="togglePanel('image')"
+          title="装饰元素"
+          aria-label="装饰元素"
+        >
+          <span class="icon"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><circle cx="5" cy="6" r="1.2"/><path d="M1.5 11.5l3-2.5 2.5 2 3.5-4 3.5 3"/></svg></span>
+          <span class="toolbar-label">装饰</span>
+          <span class="tooltip">装饰元素：封面 / 分割线 / 金句</span>
+        </div>
       </div>
 
-      <div
-        class="toolbar-item"
-        role="button"
-        :class="{ active: activePanel === 'style' }"
-        @click="togglePanel('style')"
-        title="主题与样式"
-        aria-label="主题与样式"
-      >
-        <span class="icon"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.5"/><path d="M12.5 3c.35.45.7.95 1 1.5M3.5 3c-.35.45-.7.95-1 1.5"/><path d="M2.5 12c.32-.45.67-.86 1.05-1.24M13.5 12c-.32-.45-.67-.86-1.05-1.24"/><path d="M13.5 4c-.32.45-.67.86-1.05 1.24M2.5 4c.32.45.67.86 1.05 1.24"/></svg></span>
-        <span class="toolbar-label">样式</span>
-        <span class="tooltip">主题 / 样式</span>
+      <!-- ===== 增强区 ===== -->
+      <div class="toolbar-group">
+        <span class="toolbar-group-label">增强</span>
+        <!-- AI 写作（核心功能独立） -->
+        <div
+          class="toolbar-item"
+          role="button"
+          :class="{ active: activePanel === 'ai' }"
+          @click="togglePanel('ai')"
+          title="AI 写作"
+          aria-label="AI 写作"
+        >
+          <span class="icon"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9.813 1.5l-.433 1.3c-.139.416-.208.624-.33.795a1 1 0 01-.327.27c-.152.075-.372.075-.812.075h-.155c-.376 0-.565 0-.71-.05a1 1 0 01-.618-.454c-.082-.155-.105-.348-.15-.733L6.187 1.5"/><path d="M12.454 3.085l-1.095.72c-.35.23-.525.346-.62.51a1 1 0 00-.12.423c-.005.183.082.386.256.79L11 5.833"/><path d="M2.5 7.5l.62 1.86c.102.305.152.458.055.542C3.077 9.985 2.923 9.985 2.725 9.985H2.5"/><circle cx="8" cy="13" r="2.5"/><path d="M10.748 3.332l.683.641c.163.153.24.28.28.43a.8.8 0 01-.023.374c-.041.149-.16.314-.396.643l-.117.163"/></svg></span>
+          <span class="toolbar-label">AI</span>
+          <span class="tooltip">AI 写作</span>
+        </div>
       </div>
 
-      <div
-        class="toolbar-item"
-        role="button"
-        :class="{ active: activePanel === 'image' }"
-        @click="togglePanel('image')"
-        title="装饰"
-        aria-label="装饰"
-      >
-        <span class="icon"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><circle cx="5" cy="6" r="1.2"/><path d="M1.5 11.5l3-2.5 2.5 2 3.5-4 3.5 3"/></svg></span>
-        <span class="toolbar-label">装饰</span>
-        <span class="tooltip">装饰</span>
+      <!-- ===== 发布区 ===== -->
+      <div class="toolbar-group">
+        <span class="toolbar-group-label">发布</span>
+        <!-- 预览 -->
+        <div
+          class="toolbar-item"
+          role="button"
+          :class="{ active: showPreview }"
+          @click="showPreview = !showPreview"
+          title="预览"
+          :aria-label="showPreview ? '预览中' : '打开预览'"
+        >
+          <span class="icon">
+            <template v-if="showPreview">
+              <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="0.5" width="11" height="15" rx="2"/><line x1="8" y1="2.5" x2="8" y2="4"/></svg>
+            </template>
+            <template v-else>
+              <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="0.5" width="11" height="15" rx="2"/><line x1="8" y1="4" x2="8" y2="12"/></svg>
+            </template>
+          </span>
+          <span class="toolbar-label">预览</span>
+          <span class="tooltip">{{ showPreview ? '预览中' : '打开预览' }}</span>
+        </div>
+        <!-- 复制 HTML -->
+        <div
+          class="toolbar-item"
+          role="button"
+          @click="copyHtml"
+          title="复制 HTML"
+          aria-label="复制 HTML"
+        >
+          <span class="icon"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="1.5" width="10" height="12" rx="1.5"/><path d="M10.5 5v7M5.5 5v7"/></svg></span>
+          <span class="toolbar-label">复制</span>
+          <span class="tooltip">复制 HTML (⇧⌘C)</span>
+        </div>
+        <!-- 导出 -->
+        <div
+          class="toolbar-item"
+          role="button"
+          :class="{ active: activePanel === 'export' }"
+          @click="togglePanel('export')"
+          title="导出"
+          aria-label="导出"
+        >
+          <span class="icon"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 10v1a3 3 0 01-3 3H5a3 3 0 01-3-3v-1"/><polyline points="11.5 5 8 1.5 4.5 5"/><line x1="8" y1="1.5" x2="8" y2="11"/></svg></span>
+          <span class="toolbar-label">导出</span>
+          <span class="tooltip">导出</span>
+        </div>
+        <!-- 打开微信后台（发布闭环入口，B4） -->
+        <div
+          class="toolbar-item"
+          role="button"
+          @click="openWeChat"
+          title="打开微信后台"
+          aria-label="打开微信后台"
+        >
+          <span class="icon"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5C2 5.5 4.7 3 8 3s6 2.5 6 5.5S11.3 14 8 14c-.9 0-1.7-.2-2.4-.5L3.5 14l.6-2C2.9 11.2 2 9.9 2 8.5z"/><circle cx="6" cy="8" r=".55" fill="currentColor" stroke="none"/><circle cx="10" cy="8" r=".55" fill="currentColor" stroke="none"/></svg></span>
+          <span class="toolbar-label">微信</span>
+          <span class="tooltip">打开微信后台粘贴发布</span>
+        </div>
       </div>
 
-      <div
-        class="toolbar-item"
-        role="button"
-        @click="copyHtml"
-        title="复制 HTML"
-        aria-label="复制 HTML"
-      >
-        <span class="icon"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="1.5" width="10" height="12" rx="1.5"/><path d="M10.5 5v7M5.5 5v7"/></svg></span>
-        <span class="toolbar-label">复制</span>
-        <span class="tooltip">复制 HTML</span>
-      </div>
-
-      <div
-        class="toolbar-item"
-        role="button"
-        @click="clearInlineStyles"
-        title="清除内联样式"
-        aria-label="清除内联样式"
-      >
-        <span class="icon"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2.5H3.5A1.5 1.5 0 002 4v2M10.5 2.5h1.5A1.5 1.5 0 0113.5 4v2M3 13.5l2-2.5 2 3 3-4.5 3.5 4.5M2 12V3"/></svg></span>
-        <span class="toolbar-label">清除样式</span>
-        <span class="tooltip">清除内联样式</span>
-      </div>
-
-      <div class="toolbar-spacer"></div>
-      <div class="toolbar-section-label">视图</div>
-
-      <!-- 视图区 -->
-      <div
-        class="toolbar-item"
-        role="button"
-        :class="{ active: showPreview }"
-        @click="showPreview = !showPreview"
-        title="预览"
-        :aria-label="showPreview ? '预览中' : '打开预览'"
-      >
-        <span class="icon">
-          <template v-if="showPreview">
-            <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="0.5" width="11" height="15" rx="2"/><line x1="8" y1="2.5" x2="8" y2="4"/></svg>
-          </template>
-          <template v-else>
-            <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="0.5" width="11" height="15" rx="2"/><line x1="8" y1="4" x2="8" y2="12"/></svg>
-          </template>
-        </span>
-        <span class="toolbar-label">预览</span>
-        <span class="tooltip">{{ showPreview ? '预览中' : '打开预览' }}</span>
-      </div>
-
-      <div
-        class="toolbar-item"
-        role="button"
-        :class="{ active: activePanel === 'export' }"
-        @click="togglePanel('export')"
-        title="导出"
-        aria-label="导出"
-      >
-        <span class="icon"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 10v1a3 3 0 01-3 3H5a3 3 0 01-3-3v-1"/><polyline points="11.5 5 8 1.5 4.5 5"/><line x1="8" y1="1.5" x2="8" y2="11"/></svg></span>
-        <span class="toolbar-label">导出</span>
-        <span class="tooltip">导出</span>
-      </div>
-
-      <div
-        class="toolbar-item"
-        role="button"
-        @click="showSettings = !showSettings"
-        :class="{ active: showSettings }"
-        title="设置"
-        aria-label="设置"
-      >
-        <span class="icon"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v2.3M14.3 3.3l-1.8 1.1M14.3 12.7l-1.8-1.1M1.7 12.7l1.8-1.1M1.7 3.3l1.8 1.1"/></svg></span>
-        <span class="toolbar-label">设置</span>
-        <span class="tooltip">设置</span>
+      <!-- ===== 系统区 ===== -->
+      <div class="toolbar-group">
+        <span class="toolbar-group-label">系统</span>
+        <!-- 清除样式 -->
+        <div
+          class="toolbar-item"
+          role="button"
+          @click="clearInlineStyles"
+          title="清除内联样式"
+          aria-label="清除内联样式"
+        >
+          <span class="icon"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2.5H3.5A1.5 1.5 0 002 4v2M10.5 2.5h1.5A1.5 1.5 0 0113.5 4v2M3 13.5l2-2.5 2 3 3-4.5 3.5 4.5M2 12V3"/></svg></span>
+          <span class="toolbar-label">清除</span>
+          <span class="tooltip">清除内联样式</span>
+        </div>
+        <!-- 外观模式：三态分段控件 (B3) -->
+        <ThemeModeSwitch :model-value="themeMode" @select="setThemeMode" />
       </div>
     </div>
 
-    <!-- 悬浮面板：样式调节 -->
+    <!-- 悬浮面板：外观（B5 统一：主题 + 品牌 + 微调） -->
     <Transition name="panel-slide">
-      <div v-if="activePanel === 'style'" class="floating-panel">
-        <div class="panel-header">
-          <h3>样式调节</h3>
-          <div class="header-actions">
-            <button class="apply-all-btn" @click="applyThemeToAll">🚀 套用全部</button>
-            <button @click="activePanel = null" class="panel-close">×</button>
-          </div>
-        </div>
-        <div class="panel-hint">一键把整套风格铺满全文，不用逐个标签调</div>
-        <div class="panel-content">
-          <div class="panel-section">
-            <div class="section-label">整体风格</div>
-            <div class="control-group">
-              <label class="control-label">主题</label>
-              <div class="theme-picker" tabindex="0" @blur="showThemeDropdown = false">
-                <div class="theme-picker-trigger" @click="toggleThemeDropdown">
-                  <span class="theme-dot" :style="{ background: THEMES[currentTheme]?.uiAccent }"></span>
-                  <span class="theme-picker-label">{{ THEME_NAMES[currentTheme] }}</span>
-                  <span class="theme-picker-arrow" :class="{ open: showThemeDropdown }">▾</span>
-                </div>
-                <div class="theme-picker-dropdown" v-if="showThemeDropdown">
-                  <div v-for="(t, key) in THEMES" :key="key"
-                    class="theme-picker-option"
-                    :class="{ active: currentTheme === key }"
-                    @mousedown.prevent="selectTheme(key)">
-                    <span class="theme-dot" :style="{ background: t.uiAccent }"></span>
-                    {{ THEME_NAMES[key] }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="control-group">
-            <label class="control-label">选择标签</label>
-            <select v-model="selectedTag" class="notion-select" @change="loadTagStyle">
-              <option value="h1">H1 标题</option>
-              <option value="h2">H2 标题</option>
-              <option value="h3">H3 标题</option>
-              <option value="p">正文段落</option>
-              <option value="blockquote">引用块</option>
-            </select>
-          </div>
-          <div class="control-group">
-            <label class="control-label">字号</label>
-            <div class="control-row">
-              <input 
-                type="range" 
-                v-model.number="tempFontSize" 
-                min="12" 
-                max="48" 
-                @input="applyCustomStyle" 
-                class="notion-range"
-              />
-              <span class="control-value">{{ tempFontSize }}px</span>
-            </div>
-          </div>
-          <div class="control-group">
-            <label class="control-label">颜色</label>
-            <div class="control-row">
-              <input 
-                type="color" 
-                v-model="tempColor" 
-                @input="applyCustomStyle" 
-                class="notion-color"
-              />
-              <span class="control-value">{{ tempColor }}</span>
-            </div>
-          </div>
-          <div class="control-group">
-            <label class="control-label">行间距</label>
-            <div class="control-row">
-              <input 
-                type="range" 
-                v-model.number="tempLineHeight" 
-                min="1" 
-                max="3" 
-                step="0.1"
-                @input="applyCustomStyle" 
-                class="notion-range"
-              />
-              <span class="control-value">{{ tempLineHeight }}</span>
-            </div>
-          </div>
-          <div class="control-group">
-            <label class="control-label">字间距</label>
-            <div class="control-row">
-              <input 
-                type="range" 
-                v-model.number="tempLetterSpacing" 
-                min="0" 
-                max="5" 
-                step="0.5"
-                @input="applyCustomStyle" 
-                class="notion-range"
-              />
-              <span class="control-value">{{ tempLetterSpacing }}px</span>
-            </div>
-          </div>
-          <button @click="resetTagStyle" class="notion-btn-text">
-            重置该标签
-          </button>
-        </div>
+      <div v-show="activePanel === 'appearance'">
+        <AppearancePanel
+          :current-theme="currentTheme"
+          v-model:selected-tag="selectedTag"
+          v-model:temp-font-size="tempFontSize"
+          v-model:temp-color="tempColor"
+          v-model:temp-line-height="tempLineHeight"
+          v-model:temp-letter-spacing="tempLetterSpacing"
+          v-model:brand-color="brandColor"
+          v-model:brand-font="brandFont"
+          v-model:phone-model="phoneModel"
+          @select-theme="selectTheme"
+          @load-tag-style="loadTagStyle"
+          @apply-style="applyCustomStyle"
+          @apply-all="applyThemeToAll"
+          @reset-tag="resetTagStyle"
+          @apply-brand="applyBrand"
+          @clear-brand="clearBrandColor"
+          @clear-brand-font="clearBrandFont"
+          @close="activePanel = null"
+        />
       </div>
     </Transition>
 
     <!-- 悬浮面板：装饰 -->
     <Transition name="panel-slide">
-      <div v-if="activePanel === 'image'" class="floating-panel">
+      <div v-show="activePanel === 'image'" class="floating-panel">
         <div class="panel-header">
           <h3>装饰</h3>
           <button @click="activePanel = null" class="panel-close">×</button>
@@ -267,30 +308,17 @@
             <button class="decor-item" @click="insertDecorBlock('cover')">
               <span class="decor-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="16" height="16" rx="2"/><circle cx="7" cy="7" r="1.5"/><path d="M2 14l4-4 3 3 4-5 5 6"/></svg></span>
               <span class="decor-name">封面卡片</span>
-              <span class="decor-meta">800×400 · 顶部展示</span>
+              <span class="decor-meta">顶部封面 · 标题区</span>
             </button>
             <button class="decor-item" @click="insertDecorBlock('divider')">
               <span class="decor-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="10" x2="8" y2="10"/><circle cx="10" cy="10" r="2"/><line x1="12" y1="10" x2="18" y2="10"/></svg></span>
               <span class="decor-name">分割线</span>
-              <span class="decor-meta">800×40 · 段落分隔</span>
+              <span class="decor-meta">段落之间 · 轻柔分隔</span>
             </button>
             <button class="decor-item" @click="insertDecorBlock('quote')">
               <span class="decor-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4v4H2v5h5V7H5V4zM15 4v4h-3v5h5V7h-2V4z"/></svg></span>
               <span class="decor-name">金句卡片</span>
               <span class="decor-meta">自适应 · 金句装点</span>
-            </button>
-          </div>
-          <label class="control-label" style="margin-top:16px;">插入图片</label>
-          <div class="search-box">
-            <input 
-              type="text" 
-              v-model="imageUrl" 
-              placeholder="https://... 图片地址" 
-              @keyup.enter="insertImageByUrl" 
-              class="notion-input"
-            />
-            <button @click="insertImageByUrl" class="notion-btn-small">
-              插入
             </button>
           </div>
         </div>
@@ -299,7 +327,7 @@
 
     <!-- 悬浮面板：导入文章 -->
     <Transition name="panel-slide">
-      <div v-if="activePanel === 'import'" class="floating-panel">
+      <div v-show="activePanel === 'import'" class="floating-panel">
         <div class="panel-header">
           <h3>导入文章</h3>
           <button @click="activePanel = null" class="panel-close">×</button>
@@ -317,166 +345,98 @@
 
     <!-- 悬浮面板：AI 写作 -->
     <Transition name="panel-slide">
-      <div v-if="activePanel === 'ai'" class="floating-panel">
-        <div class="panel-header">
-          <h3>AI 写作</h3>
-          <button @click="activePanel = null" class="panel-close">×</button>
-        </div>
-        <div class="panel-content">
-          <p class="panel-tip">🔒 你的 Key 只存在本机，文章只发往你选的厂商，我们服务器看不到。</p>
-          <div class="control-group">
-            <label class="control-label">接口预设</label>
-            <select v-model="aiPreset" @change="onAiPresetChange" class="notion-select">
-              <option value="deepseek">DeepSeek</option>
-              <option value="openai">OpenAI</option>
-              <option value="openrouter">OpenRouter（浏览器直连最稳）</option>
-              <option value="custom">自定义</option>
-            </select>
-          </div>
-          <div class="control-group">
-            <label class="control-label">API Key</label>
-            <input type="password" v-model="aiKey" @input="saveAiConfig" class="notion-input" placeholder="sk-..." />
-          </div>
-          <div class="control-group" v-if="aiPreset === 'custom'">
-            <label class="control-label">Base URL</label>
-            <input type="text" v-model="aiBaseUrl" @input="saveAiConfig" class="notion-input" placeholder="https://.../v1" />
-          </div>
-          <div class="control-group">
-            <label class="control-label">模型名</label>
-            <input type="text" v-model="aiModel" @input="saveAiConfig" class="notion-input" placeholder="deepseek-chat" />
-          </div>
-          <div class="ai-actions">
-            <button class="notion-btn-small primary" :disabled="aiLoading" @click="aiGenerateTitle">✨ 生成标题</button>
-            <button class="notion-btn-small primary" :disabled="aiLoading" @click="aiWriteSummary">📝 写摘要</button>
-            <button class="notion-btn-small primary" :disabled="aiLoading" @click="aiExpand">🔍 扩写段落</button>
-            <button class="notion-btn-small primary" :disabled="aiLoading" @click="aiStructure">📐 一键结构化排版</button>
-          </div>
-          <p class="panel-tip" v-if="aiLoading" style="margin-top:12px;">AI 正在处理，请稍候…</p>
-        </div>
-      </div>
-    </Transition>
-
-    <!-- 悬浮面板：设置 -->
-    <Transition name="panel-slide">
-      <div v-if="showSettings" class="floating-panel">
-        <div class="panel-header">
-          <h3>设置</h3>
-          <button @click="showSettings = false" class="panel-close">×</button>
-        </div>
-        <div class="panel-content">
-          <div class="control-group">
-            <label class="control-label">手机型号</label>
-            <select v-model="phoneModel" class="notion-select">
-              <option value="iphone-se">📱 iPhone SE (375px)</option>
-              <option value="iphone-14">📱 iPhone 14 (390px)</option>
-              <option value="iphone-14pm">📱 iPhone 14 Pro Max (430px)</option>
-              <option value="android-small">📱 安卓小屏 (360px)</option>
-              <option value="android-large">📱 安卓大屏 (412px)</option>
-            </select>
-          </div>
-          <div class="control-group">
-            <label class="control-label">品牌主色</label>
-            <div class="control-row">
-              <input type="color" v-model="brandColor" @input="applyBrand" class="notion-color" />
-              <span class="control-value">{{ brandColor || '跟随主题' }}</span>
-              <button class="notion-btn-text" v-if="brandColor" @click="clearBrandColor">清除</button>
-            </div>
-          </div>
-          <div class="control-group">
-            <label class="control-label">正文字体</label>
-            <select v-model="brandFont" @change="applyBrand" class="notion-select">
-              <option value="">系统默认</option>
-              <option value="serif">宋体 / Serif</option>
-              <option value="sans">黑体 / Sans</option>
-              <option value="kai">楷体</option>
-              <option value="deng">等线</option>
-            </select>
-          </div>
-        </div>
+      <div v-show="activePanel === 'ai'">
+        <AIPanel
+          v-model:ai-preset="aiPreset"
+          v-model:ai-key="aiKey"
+          v-model:ai-base-url="aiBaseUrl"
+          v-model:ai-model="aiModel"
+          :ai-loading="aiLoading"
+          :ai-recommendations="aiRecommendations"
+          :ai-intro-seen="aiIntroSeen"
+          @dismiss-ai-intro="dismissAiIntro"
+          @run-action="runAiAction"
+          @close="activePanel = null"
+          @cancel="cancelAI"
+        />
       </div>
     </Transition>
 
     <!-- 悬浮面板：导出 -->
     <Transition name="panel-slide">
-      <div v-if="activePanel === 'export'" class="floating-panel">
-        <div class="panel-header">
-          <h3>导出</h3>
-          <button @click="activePanel = null" class="panel-close">×</button>
-        </div>
-        <div class="panel-content">
-          <p class="panel-tip">把排版好的内容落盘或发到微信。全程在本地完成，不联网。</p>
-          <div class="export-actions">
-            <button class="notion-btn-small primary" @click="exportHtmlFile">⬇️ 下载 HTML 文件</button>
-            <button class="notion-btn-small" @click="exportMarkdown">⬇️ 下载 Markdown</button>
-            <button class="notion-btn-small" @click="openWeChat">🔗 一键打开微信后台</button>
-          </div>
-          <p class="panel-tip" style="margin-top:16px;">
-            提示：HTML 文件带完整内联样式，可直接发给同事或上传微信素材库；Markdown 方便归档。
-          </p>
-        </div>
+      <div v-show="activePanel === 'export'">
+        <ExportPanel
+          @export-html="exportHtmlFile"
+          @export-markdown="exportMarkdown"
+          @open-we-chat="openWeChat"
+          @close="activePanel = null"
+        />
       </div>
     </Transition>
 
     <!-- 主体区域 -->
     <main class="main-content" :class="{ 'preview-left': previewPosition === 'left', 'preview-hidden': !showPreview, 'panel-open': !!activePanel }">
       <!-- 预览区 -->
-      <section v-if="showPreview" class="preview-section" :style="{ width: previewWidth + 'px' }">
-        <div class="preview-header">
-          <span class="preview-label">预览</span>
-          <div class="preview-controls">
-            <div class="preview-btn-group">
-              <button 
-                class="preview-btn" 
-                :class="{ active: previewPosition === 'left' }"
-                @click="previewPosition = 'left'"
-              >左</button>
-              <button 
-                class="preview-btn" 
-                :class="{ active: previewPosition === 'right' }"
-                @click="previewPosition = 'right'"
-              >右</button>
-            </div>
-            <button class="preview-btn" @click="showPreview = false">隐藏</button>
-          </div>
-        </div>
-        <div class="phone-wrapper">
-          <div 
-            class="phone-frame"
-            :class="phoneModel"
-          >
-            <div class="phone-wechat-bar">
-              <svg class="wechat-back" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#576b95" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-              <span class="wechat-title">公众号文章预览</span>
-              <svg class="wechat-menu" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#576b95" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
-            </div>
-            <div v-if="!markdownText.trim()" class="phone-content">
-              <div class="empty-state">
-                <div class="empty-icon">✍️</div>
-                <p>在左侧写点什么</p>
-                <p class="empty-hint">Markdown 随手写，这里实时变成公众号样式</p>
-              </div>
-            </div>
-            <div v-else class="phone-content" v-html="previewHtml"></div>
-          </div>
-        </div>
-      </section>
+        <PreviewPanel
+          :show-preview="showPreview"
+          :preview-width="previewWidth"
+          v-model:preview-position="previewPosition"
+          v-model:show-preview="showPreview"
+          v-model:preview-wechat-dark="previewWechatDark"
+        :preview-html="previewHtml"
+        :markdown-text="markdownText"
+        :phone-model="phoneModel"
+        @load-sample-article="loadSampleArticle"
+      />
 
-      <!-- 拖拽分隔线 -->
+      <!-- 拖拽分隔线（Pointer Events 统一鼠标/触屏） -->
       <div 
         v-if="showPreview" 
         class="resize-handle"
-        @mousedown="startResize"
-        @mousemove="onResize"
-        @mouseup="stopResize"
+        @pointerdown="startResize"
       ></div>
 
       <!-- 编辑器区域 -->
       <section class="editor-section">
+        <!-- 上下文工具栏（选区即操作） -->
+        <Transition name="slide-down">
+          <div v-if="selectedType" class="context-bar">
+            <!-- 选中标题 -->
+            <template v-if="selectedType === 'heading'">
+              <span class="context-label">标题</span>
+              <button class="context-btn" @click="setHeadingLevel(1)">H1</button>
+              <button class="context-btn" @click="setHeadingLevel(2)">H2</button>
+              <button class="context-btn" @click="setHeadingLevel(3)">H3</button>
+            </template>
+            <!-- 选中文字：≥10 字给 AI 操作；短文给格式化操作（避免空白死路） -->
+            <template v-if="selectedType === 'text'">
+              <span class="context-label">文字 ({{ selectionLength }}字)</span>
+              <template v-if="selectionLength >= 10">
+                <button class="context-btn" @click="aiExpand">⚡扩写</button>
+                <button class="context-btn" @click="aiRewrite">🔄改写</button>
+                <button class="context-btn" @click="aiTranslate">🌐翻译</button>
+              </template>
+              <template v-else>
+                <button class="context-btn" @click="formatBold" title="加粗"><b>B</b></button>
+                <button class="context-btn" @click="formatItalic" title="斜体"><i>I</i></button>
+                <button class="context-btn" @click="formatLink" title="插入链接">🔗</button>
+              </template>
+            </template>
+            <button class="context-close" @click="selectedType = null" title="关闭">×</button>
+          </div>
+        </Transition>
         <div class="editor-container">
           <div class="milkdown-theme-editor" ref="milkdownContainer"></div>
         </div>
         <div class="status-bar">
-          <span class="status-privacy">🔒 {{ savedLabel }} · 内容仅存本机</span>
+          <span class="status-item">{{ wordCount }} 字</span>
+          <span class="status-sep">·</span>
+          <span class="status-item">约 {{ readTime }} 分钟</span>
+          <span class="status-sep">·</span>
+          <span class="status-item">🔒 {{ savedLabel }}</span>
+          <span v-if="aiLoading" class="status-item ai-status">
+            <span class="ai-spinner"></span>AI 写作中…
+          </span>
         </div>
       </section>
     </main>
@@ -488,6 +448,13 @@
       </div>
     </Transition>
 
+    <!-- B4：复制成功后的发布闭环轻引导（常驻） -->
+    <PublishWizard
+      :visible="publishGuide"
+      @close="publishGuide = false"
+      @open-wechat="openWeChat"
+    />
+
     <!-- 移动端预览浮钮 -->
     <button class="mobile-preview-fab" @click="showPreview = !showPreview">
       {{ showPreview ? '✏️ 编辑' : '👁 预览' }}
@@ -497,40 +464,96 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
-import { Editor, rootCtx, defaultValueCtx, editorViewCtx, serializerCtx } from '@milkdown/kit/core';
-import { commonmark } from '@milkdown/kit/preset/commonmark';
+import { Editor, rootCtx, defaultValueCtx, editorViewCtx, serializerCtx, commandsCtx } from '@milkdown/kit/core';
+import { commonmark, toggleStrongCommand, toggleEmphasisCommand, toggleLinkCommand } from '@milkdown/kit/preset/commonmark';
 import { gfm } from '@milkdown/kit/preset/gfm';
-import { replaceAll, $nodeSchema, $remark } from '@milkdown/kit/utils';
+import { replaceAll, replaceRange, $nodeSchema, $remark } from '@milkdown/kit/utils';
+import { history, undoCommand } from '@milkdown/plugin-history';
 import { listener, listenerCtx } from '@milkdown/kit/plugin/listener';
+import { headingEnterFix } from './plugins/headingEnterFix.js';
+import { forceParagraphEnter } from './plugins/forceParagraphEnter.js';
+
+// composables
+import { useDraft } from './composables/useDraft.js';
+import { useBrand } from './composables/useBrand.js';
+import { useStyle } from './composables/useStyle.js';
+import PreviewPanel from './components/PreviewPanel.vue';
+import AIPanel from './components/AIPanel.vue';
+import AppearancePanel from './components/AppearancePanel.vue';
+import ExportPanel from './components/ExportPanel.vue';
+import PublishWizard from './components/PublishWizard.vue';
+import ThemeModeSwitch from './components/ThemeModeSwitch.vue';
 import remarkDirectivePlugin from 'remark-directive';
-import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import TurndownService from 'turndown';
+import { THEMES } from './themes.js';
+import { deriveDarkTheme } from './darkTheme.js';
+import { buildHtml, stripBareDirectives, _brandShade, applyBrandToTheme } from './buildHtml.js';
+import { callAI as _extCallAI } from './callAI.js';
 
 // remark-directive 必须用 $remark 包装：内部访问 self.data()，只有经 unified 调用才能拿到正确 this
 const remarkDirective = $remark('remarkDirective', () => remarkDirectivePlugin);
 
 // ---------- Toast 通知 ----------
 const toast = ref({ show: false, message: '', type: 'success' });
+// B4：复制成功后的发布闭环轻引导（常驻，直到用户关闭或再次复制）
+const publishGuide = ref(false);
 
-const showToast = (message, type = 'success') => {
+const showToast = (message, type = 'success', duration = 2500) => {
   toast.value = { show: true, message, type };
   setTimeout(() => {
     toast.value.show = false;
-  }, 2500);
+  }, duration);
 };
 
 // ---------- 面板控制 ----------
 const activePanel = ref(null);
-const showSettings = ref(false);
 const showPreview = ref(true);
+const showShortcuts = ref(false);
+
+// 外观模式：light / dark / system（跟随系统）
+// 模块顶层读取持久化的 themeMode 并立即应用到 DOM，消除初始化过程中 1–2 帧浅色闪烁
+const _savedThemeMode = (() => {
+  try { return JSON.parse(localStorage.getItem('podcast_settings') || '{}').themeMode; } catch { return null; }
+})();
+// URL 参数 ?theme=light|dark|system 可强制覆盖（用于调试/对比，优先级最高）
+const _forcedTheme = (() => {
+  try {
+    const t = new URLSearchParams(location.search).get('theme');
+    return (t === 'light' || t === 'dark' || t === 'system') ? t : null;
+  } catch { return null; }
+})();
+const _initialTheme = _forcedTheme || _savedThemeMode || 'light';
+// 响应式系统深色模式偏好（通过 matchMedia change 事件驱动）
+const systemDark = ref(window.matchMedia('(prefers-color-scheme: dark)').matches);
+let systemDarkMql = null;
+// 把 "system" 解析为真实 light/dark：data-theme 只承载已解析结果，
+// 外壳 CSS（variables.css）不再感知 system，从而真正跟随系统而非被写死成深色
+const resolveMode = (mode) => (mode === 'system' ? (systemDark.value ? 'dark' : 'light') : mode);
+document.documentElement.setAttribute('data-theme', resolveMode(_initialTheme));
+const themeMode = ref(_initialTheme);
+const applyThemeMode = (mode) => {
+  themeMode.value = mode;
+  document.documentElement.setAttribute('data-theme', resolveMode(mode));
+};
+const setThemeMode = (mode) => {
+  applyThemeMode(mode);
+  saveSettings();
+};
+
+// 当前是否为深色模式（用于编辑区和预览区样式计算）
+const isDarkMode = computed(() => {
+  if (themeMode.value === 'dark') return true;
+  if (themeMode.value === 'system') return systemDark.value;
+  return false;
+});
+
 const previewPosition = ref('right');
 const previewWidth = ref(320);
 const phoneModel = ref('iphone-14');
 
 const togglePanel = (panel) => {
   activePanel.value = activePanel.value === panel ? null : panel;
-  showSettings.value = false;
 };
 
 // ---------- 拖拽调整宽度 ----------
@@ -538,8 +561,12 @@ let isResizing = false;
 
 const startResize = (e) => {
   isResizing = true;
-  document.addEventListener('mousemove', onResize);
-  document.addEventListener('mouseup', stopResize);
+  // 用 handle 自身捕获指针，触屏拖拽不丢手势、不抢页面滚动
+  if (e && e.pointerId !== undefined && e.currentTarget) {
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+  }
+  document.addEventListener('pointermove', onResize);
+  document.addEventListener('pointerup', stopResize);
 };
 
 const onResize = (e) => {
@@ -557,12 +584,11 @@ const onResize = (e) => {
 
 const stopResize = () => {
   isResizing = false;
-  document.removeEventListener('mousemove', onResize);
-  document.removeEventListener('mouseup', stopResize);
+  document.removeEventListener('pointermove', onResize);
+  document.removeEventListener('pointerup', stopResize);
 };
 
-// ---------- 装饰 & 图片 ----------
-const imageUrl = ref('');
+// ---------- 装饰 ----------
 const importText = ref('');
 
 // ---------- AI 写作（用户自带 Key，纯前端直连）----------
@@ -577,6 +603,13 @@ const aiPreset = ref('deepseek');
 const aiBaseUrl = ref(AI_PRESETS.deepseek.baseURL);
 const aiModel = ref(AI_PRESETS.deepseek.model);
 const aiLoading = ref(false);
+
+// AI 前置说明：首次打开提示「需自备 Key、仅本地直连厂商」，可关闭且记忆
+const aiIntroSeen = ref(localStorage.getItem('podcast_ai_intro_seen') === '1');
+const dismissAiIntro = () => {
+  aiIntroSeen.value = true;
+  localStorage.setItem('podcast_ai_intro_seen', '1');
+};
 
 // ---------- 编辑器内容 ----------
 const DEFAULT_CONTENT = `# 欢迎使用 净排
@@ -593,12 +626,20 @@ const DEFAULT_CONTENT = `# 欢迎使用 净排
 
 开始写点什么吧 ✍️`;
 
+// 加载草稿时清理：复用 stripBareDirectives 中和「默认占位装饰种子块」
+// （::: cover/divider/quote\n点击编辑文字\n::: 及其转义变体）。
+// 这是 Bug A 的 misparse 种子，必须在解析前清除（见 buildHtml.stripBareDirectives 注释）。
+const normalizeStaleWelcome = (md) => stripBareDirectives(md);
+
 const markdownText = ref(DEFAULT_CONTENT);
+const { savedLabel, showRecoveryBanner, saveDraft, saveDraftNow, loadDraft: loadDraft_ } = useDraft(markdownText);
+const { brandColor, brandFont, loadBrand, saveBrand, clearBrandColor: _brandClearColor, clearBrandFont: _brandClearFont } = useBrand();
 const milkdownContainer = ref(null);
 let milkdownEditor = null;
 let isFromEditor = false;
 let isSettingEditor = false;
 const previewHtml = ref('');
+const previewWechatDark = ref(false); // 预览「模拟微信深色模式」开关（仅影响预览，不影响导出）
 const currentTheme = ref('serif_news');
 
 // ---------- 样式调节 ----------
@@ -608,8 +649,6 @@ const tempColor = ref('#07c160');
 const tempLineHeight = ref(1.8);
 const tempLetterSpacing = ref(0);
 const customOverrides = ref({});
-const brandColor = ref('');
-const brandFont = ref('');
 
 // ---------- 加载本地存储 ----------
 const loadFromStorage = () => {
@@ -622,12 +661,9 @@ const loadFromStorage = () => {
     }
   }
   // 加载草稿
-  const savedDraft = localStorage.getItem('podcast_draft');
-  if (savedDraft && savedDraft.trim()) {
-    markdownText.value = savedDraft;
-    lastSavedAt.value = Date.now();
-    showRecoveryBanner.value = true;
-  }
+  loadDraft_();
+  // 清理草稿里残留的封面占位块（避免与裸 ::: 错位误判成封面卡片）
+  markdownText.value = normalizeStaleWelcome(markdownText.value);
   // 加载设置
   const savedSettings = localStorage.getItem('podcast_settings');
   if (savedSettings) {
@@ -638,20 +674,15 @@ const loadFromStorage = () => {
       if (settings.phoneModel) phoneModel.value = settings.phoneModel;
       if (settings.showPreview !== undefined) showPreview.value = settings.showPreview;
       if (settings.theme && THEMES[settings.theme]) currentTheme.value = settings.theme;
+      // URL 强制主题 (?theme=) 优先级高于存档，便于调试对比
+      if (!_forcedTheme && settings.themeMode) applyThemeMode(settings.themeMode);
     } catch (e) {
       console.warn('设置数据损坏，已重置:', e);
       localStorage.removeItem('podcast_settings');
     }
   }
   // 加载品牌设置
-  const savedBrand = localStorage.getItem('podcast_brand');
-  if (savedBrand) {
-    try {
-      const b = JSON.parse(savedBrand);
-      if (b.color) brandColor.value = b.color;
-      if (b.font) brandFont.value = b.font;
-    } catch (e) {}
-  }
+  loadBrand();
   // 加载 AI 配置
   const savedAi = localStorage.getItem('podcast_ai_config');
   if (savedAi) {
@@ -667,485 +698,94 @@ const loadFromStorage = () => {
   loadTagStyle();
 };
 
-// ---------- 保存到本地存储 ----------
-const saveToStorage = () => {
-  localStorage.setItem('podcast_theme_overrides', JSON.stringify(customOverrides.value));
-};
-
 const saveSettings = () => {
   const settings = {
     previewPosition: previewPosition.value,
     previewWidth: previewWidth.value,
     phoneModel: phoneModel.value,
     showPreview: showPreview.value,
-    theme: currentTheme.value
+    theme: currentTheme.value,
+    themeMode: themeMode.value
   };
   localStorage.setItem('podcast_settings', JSON.stringify(settings));
 };
 
-// ---------- 自动保存状态 ----------
-const lastSavedAt = ref(null);
-const now = ref(Date.now());
-const showRecoveryBanner = ref(false);
+// Onboarding 新手引导
+const showOnboarding = ref(false);
+const onboardingStep = ref(1);
 
-const savedLabel = computed(() => {
-  if (!lastSavedAt.value) return '输入即自动保存';
-  const diff = Math.floor((now.value - lastSavedAt.value) / 1000);
-  if (diff < 5) return '刚刚';
-  if (diff < 60) return diff + ' 秒前';
-  if (diff < 3600) return Math.floor(diff / 60) + ' 分钟前';
-  const d = new Date(lastSavedAt.value);
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
-  return '已保存于 ' + hh + ':' + mm;
+// 上下文工具栏：选区类型
+const selectedType = ref(null); // null | 'text' | 'heading'
+const selectionLength = ref(0);
+
+// 选区格式化命令（上下文栏：短文/选中文字时使用，避免空白死路）
+const runMilkdownCommand = (cmd, payload) => {
+  if (!milkdownEditor) return;
+  milkdownEditor.action((ctx) => {
+    const commands = ctx.get(commandsCtx);
+    if (payload !== undefined) commands.call(cmd.key, payload);
+    else commands.call(cmd.key);
+  });
+};
+const formatBold = () => runMilkdownCommand(toggleStrongCommand);
+const formatItalic = () => runMilkdownCommand(toggleEmphasisCommand);
+const formatLink = () => {
+  const url = window.prompt('请输入链接地址（https://...）');
+  if (!url) return;
+  runMilkdownCommand(toggleLinkCommand, { href: url, title: '' });
+};
+
+// 字数统计（去 Markdown 语法、链接、图片标记后的纯文本字数）
+const wordCount = computed(() => {
+  const plain = markdownText.value
+    .replace(/^#+\s+/gm, '')  // 标题标记
+    .replace(/[>*_~`|]/g, '')  // 符号
+    .replace(/!\[.*?\]\(.*?\)/g, '')  // 图片
+    .replace(/\[([^\]]*)\]\(.*?\)/g, '$1')  // 链接保留文本
+    .replace(/\s+/g, '');  // 空白
+  return plain.length;
 });
 
-// ---------- 保存草稿 ----------
-const saveDraft = () => {
-  localStorage.setItem('podcast_draft', markdownText.value);
-  lastSavedAt.value = Date.now();
-};
+// 预估阅读时长（中文 ~400 字/分钟）
+const readTime = computed(() => Math.max(1, Math.round(wordCount.value / 400)));
 
-// ---------- 加载标签样式到面板 ----------
-const loadTagStyle = () => {
-  const tag = selectedTag.value;
-  if (customOverrides.value[tag]) {
-    const s = customOverrides.value[tag];
-    if (s['font-size']) tempFontSize.value = parseInt(s['font-size']);
-    else tempFontSize.value = getDefaultStyle(tag, 'font-size');
-    if (s['color']) tempColor.value = s['color'];
-    else tempColor.value = getDefaultStyle(tag, 'color');
-    if (s['line-height']) tempLineHeight.value = parseFloat(s['line-height']);
-    else tempLineHeight.value = 1.8;
-    if (s['letter-spacing']) tempLetterSpacing.value = parseFloat(s['letter-spacing']);
-    else tempLetterSpacing.value = 0;
-  } else {
-    tempFontSize.value = getDefaultStyle(tag, 'font-size');
-    tempColor.value = getDefaultStyle(tag, 'color');
-    tempLineHeight.value = 1.8;
-    tempLetterSpacing.value = 0;
-  }
-};
+// AI 场景化推荐：根据编辑器内容智能推荐最合适的操作
+const aiRecommendations = computed(() => {
+  const md = markdownText.value;
+  const hasContent = md.trim().length > 20;
+  const hasHeadings = /^#{1,3}\s/m.test(md);
+  const isLong = wordCount.value > 500;
+  const all = [
+    { key: 'generateTitle', label: '✨ 生成标题', desc: 'AI 为文章起一个好标题' },
+    { key: 'writeSummary', label: '📝 写摘要', desc: '自动提炼文章核心要点' },
+    { key: 'expand', label: '🔍 扩写段落', desc: '丰富细节，扩展成更长内容' },
+    { key: 'structure', label: '📐 结构化排版', desc: '补充小标题、合理分段、加粗重点' },
+  ];
+  // 无内容 → 优先生成标题
+  if (!hasContent) return { primary: [all[0]], rest: all.slice(1) };
+  // 长文无标题 → 结构化 + 摘要
+  if (isLong && !hasHeadings) return { primary: [all[3], all[1]], rest: [all[0], all[2]] };
+  // 长文有标题 → 摘要 + 扩写
+  if (isLong) return { primary: [all[1], all[2]], rest: [all[0], all[3]] };
+  // 短文 → 扩写 + 结构化
+  return { primary: [all[2], all[3]], rest: [all[0], all[1]] };
+});
 
-const getDefaultStyle = (tag, prop) => {
-  const defaults = {
-    h1: { 'font-size': 32, 'color': '#8b0000' },
-    h2: { 'font-size': 22, 'color': '#222222' },
-    h3: { 'font-size': 19, 'color': '#333333' },
-    p: { 'font-size': 17, 'color': '#333333' },
-    blockquote: { 'font-size': 17, 'color': '#555555' }
-  };
-  return defaults[tag]?.[prop] || 16;
-};
+// THEMES / THEME_NAMES 已提取到 src/themes.js
 
-// ---------- 主题预设 ----------
-const THEMES = {
-  // ========== 原有 4 套（扩展 L1+L2+L3）==========
-  serif_news: {
-    body: "background:#f9f7f1;font-family:'PingFang SC','Microsoft YaHei','Noto Serif SC',Georgia,serif;color:#333;padding:20px 16px;max-width:100%",
-    h1: 'font-size:32px;color:#8b0000;font-weight:bold;margin:16px 0 8px;border-bottom:2px solid #8b0000;padding-bottom:8px',
-    h2: 'font-size:22px;color:#222;font-weight:bold;margin:14px 0 6px',
-    h3: 'font-size:19px;color:#333;font-weight:bold;margin:12px 0 4px',
-    h4: 'font-size:18px;color:#444;font-weight:bold;margin:10px 0 4px',
-    h5: 'font-size:17px;color:#555;font-weight:bold;margin:8px 0 3px',
-    h6: 'font-size:16px;color:#666;font-weight:bold;margin:6px 0 3px',
-    p: 'font-size:17px;color:#333;line-height:1.8;margin:8px 0',
-    blockquote: 'font-size:17px;color:#555;border-left:3px solid #8b0000;padding:8px 16px;margin:12px 0;background:#f0ebe3',
-    ul: 'padding-left:24px;margin:8px 0',
-    ol: 'padding-left:24px;margin:8px 0',
-    li: 'margin:4px 0;font-size:17px;color:#333',
-    img: 'max-width:100%;border-radius:6px;margin:12px 0',
-    a: 'color:#8b0000;text-decoration:underline',
-    code: 'font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;background:#eee5d9;padding:1px 5px;border-radius:3px;color:#8b0000',
-    pre: 'background:#f5f1ea;padding:12px 16px;border-radius:6px;overflow-x:auto;font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;line-height:1.6;margin:10px 0;color:#333',
-    hr: 'border:0;border-top:1px solid #d9ceba;margin:16px 0',
-    table: 'border-collapse:collapse;width:100%;margin:10px 0;font-size:15px',
-    th: 'background:#eee5d9;font-weight:bold;padding:8px 12px;border:0.5px solid #d9ceba;color:#333',
-    td: 'padding:8px 12px;border:0.5px solid #d9ceba;color:#333',
-    strong: 'font-weight:600;color:#222',
-    em: 'font-style:italic;color:#555',
-    del: 'text-decoration:line-through;opacity:0.7',
-    mark: 'background:#fff3cd;padding:1px 3px;border-radius:2px',
-    nestedList: 'margin-left:8px;font-size:15px',
-    uiAccent: '#b57373'
-  },
-  neon_tech: {
-    body: "background:#0d1117;font-family:'PingFang SC','Microsoft YaHei','SF Mono',monospace;color:#c9d1d9;padding:20px 16px;max-width:100%",
-    h1: 'font-size:32px;color:#58a6ff;font-weight:bold;margin:16px 0 8px;border-bottom:1px solid #30363d;padding-bottom:8px',
-    h2: 'font-size:22px;color:#79c0ff;font-weight:bold;margin:14px 0 6px',
-    h3: 'font-size:19px;color:#a5d6ff;font-weight:bold;margin:12px 0 4px',
-    h4: 'font-size:18px;color:#b8d8ff;font-weight:bold;margin:10px 0 4px',
-    h5: 'font-size:17px;color:#cadfff;font-weight:bold;margin:8px 0 3px',
-    h6: 'font-size:16px;color:#d0e3ff;font-weight:bold;margin:6px 0 3px',
-    p: 'font-size:17px;color:#c9d1d9;line-height:1.8;margin:8px 0',
-    blockquote: 'font-size:17px;color:#8b949e;border-left:3px solid #58a6ff;padding:8px 16px;margin:12px 0;background:#161b22',
-    ul: 'padding-left:24px;margin:8px 0',
-    ol: 'padding-left:24px;margin:8px 0',
-    li: 'margin:4px 0;font-size:17px;color:#c9d1d9',
-    img: 'max-width:100%;border-radius:6px;margin:12px 0',
-    a: 'color:#58a6ff;text-decoration:none',
-    code: 'font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;background:#21262d;padding:1px 5px;border-radius:3px;color:#79c0ff',
-    pre: 'background:#161b22;padding:12px 16px;border-radius:6px;overflow-x:auto;font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;line-height:1.6;margin:10px 0;color:#c9d1d9;border:1px solid #30363d',
-    hr: 'border:0;border-top:1px solid #30363d;margin:16px 0',
-    table: 'border-collapse:collapse;width:100%;margin:10px 0;font-size:15px',
-    th: 'background:#21262d;font-weight:bold;padding:8px 12px;border:0.5px solid #30363d;color:#c9d1d9',
-    td: 'padding:8px 12px;border:0.5px solid #30363d;color:#c9d1d9',
-    strong: 'font-weight:600;color:#e6edf3',
-    em: 'font-style:italic;color:#8b949e',
-    del: 'text-decoration:line-through;opacity:0.7',
-    mark: 'background:#1c3a5e;padding:1px 3px;border-radius:2px;color:#c9d1d9',
-    nestedList: 'margin-left:8px;font-size:15px',
-    uiAccent: '#8ab8e5'
-  },
-  mellow_pink: {
-    body: "background:#fff5f5;font-family:'PingFang SC','Microsoft YaHei',KaiTi,serif;color:#4a3f3f;padding:20px 16px;max-width:100%",
-    h1: 'font-size:32px;color:#c7748b;font-weight:bold;margin:16px 0 8px',
-    h2: 'font-size:22px;color:#d4899e;font-weight:bold;margin:14px 0 6px',
-    h3: 'font-size:19px;color:#e0a0b2;font-weight:bold;margin:12px 0 4px',
-    h4: 'font-size:18px;color:#e8b5c2;font-weight:bold;margin:10px 0 4px',
-    h5: 'font-size:17px;color:#eccad3;font-weight:bold;margin:8px 0 3px',
-    h6: 'font-size:16px;color:#f0d8de;font-weight:bold;margin:6px 0 3px',
-    p: 'font-size:17px;color:#4a3f3f;line-height:1.8;margin:8px 0',
-    blockquote: 'font-size:17px;color:#8b7b7b;border-left:3px solid #c7748b;padding:8px 16px;margin:12px 0;background:#ffe8ee',
-    ul: 'padding-left:24px;margin:8px 0',
-    ol: 'padding-left:24px;margin:8px 0',
-    li: 'margin:4px 0;font-size:17px;color:#4a3f3f',
-    img: 'max-width:100%;border-radius:8px;margin:12px 0',
-    a: 'color:#c7748b;text-decoration:underline',
-    code: 'font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;background:#ffe8ee;padding:1px 5px;border-radius:3px;color:#c7748b',
-    pre: 'background:#ffe8ee;padding:12px 16px;border-radius:6px;overflow-x:auto;font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;line-height:1.6;margin:10px 0;color:#4a3f3f',
-    hr: 'border:0;border-top:1px solid #f0c8d4;margin:16px 0',
-    table: 'border-collapse:collapse;width:100%;margin:10px 0;font-size:15px',
-    th: 'background:#ffe8ee;font-weight:bold;padding:8px 12px;border:0.5px solid #f0c8d4;color:#4a3f3f',
-    td: 'padding:8px 12px;border:0.5px solid #f0c8d4;color:#4a3f3f',
-    strong: 'font-weight:600;color:#3a2f2f',
-    em: 'font-style:italic;color:#8b7b7b',
-    del: 'text-decoration:line-through;opacity:0.7',
-    mark: 'background:#fde0e6;padding:1px 3px;border-radius:2px',
-    nestedList: 'margin-left:8px;font-size:15px',
-    uiAccent: '#d4a3af'
-  },
-  zen_minimal: {
-    body: "background:#fff;font-family:'PingFang SC','Microsoft YaHei','Hiragino Sans GB',sans-serif;color:#2c2c2c;padding:20px 16px;max-width:100%",
-    h1: 'font-size:32px;color:#1a1a1a;font-weight:bold;margin:16px 0 8px',
-    h2: 'font-size:22px;color:#2c2c2c;font-weight:bold;margin:14px 0 6px',
-    h3: 'font-size:19px;color:#3d3d3d;font-weight:bold;margin:12px 0 4px',
-    h4: 'font-size:18px;color:#4a4a4a;font-weight:bold;margin:10px 0 4px',
-    h5: 'font-size:17px;color:#5a5a5a;font-weight:bold;margin:8px 0 3px',
-    h6: 'font-size:16px;color:#6a6a6a;font-weight:bold;margin:6px 0 3px',
-    p: 'font-size:17px;color:#2c2c2c;line-height:1.8;margin:8px 0',
-    blockquote: 'font-size:17px;color:#666;border-left:3px solid #d0d0d0;padding:8px 16px;margin:12px 0;background:#f5f5f5',
-    ul: 'padding-left:24px;margin:8px 0',
-    ol: 'padding-left:24px;margin:8px 0',
-    li: 'margin:4px 0;font-size:17px;color:#2c2c2c',
-    img: 'max-width:100%;border-radius:4px;margin:12px 0',
-    a: 'color:#2c2c2c;text-decoration:underline',
-    code: 'font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;background:#f0f0f0;padding:1px 5px;border-radius:3px;color:#e83e8c',
-    pre: 'background:#f8f8f8;padding:12px 16px;border-radius:6px;overflow-x:auto;font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;line-height:1.6;margin:10px 0;color:#2c2c2c;border:1px solid #e0e0e0',
-    hr: 'border:0;border-top:1px solid #e0e0e0;margin:16px 0',
-    table: 'border-collapse:collapse;width:100%;margin:10px 0;font-size:15px',
-    th: 'background:#f5f5f5;font-weight:bold;padding:8px 12px;border:0.5px solid #d0d0d0;color:#2c2c2c',
-    td: 'padding:8px 12px;border:0.5px solid #d0d0d0;color:#2c2c2c',
-    strong: 'font-weight:600;color:#1a1a1a',
-    em: 'font-style:italic;color:#666',
-    del: 'text-decoration:line-through;opacity:0.7',
-    mark: 'background:#fff9c4;padding:1px 3px;border-radius:2px',
-    nestedList: 'margin-left:8px;font-size:15px',
-    uiAccent: '#8a8a8a'
-  },
+// buildHtml 已提取到 src/buildHtml.js
 
-  // ========== 新增 6 套（完整 L1+L2+L3）==========
-  biz_blue: {
-    body: "background:#fff;font-family:'PingFang SC','Microsoft YaHei','Hiragino Sans GB',sans-serif;color:#1e293b;padding:20px 16px;max-width:100%",
-    h1: 'font-size:32px;color:#185FA5;font-weight:bold;margin:16px 0 8px;border-bottom:2px solid #185FA5;padding-bottom:8px',
-    h2: 'font-size:22px;color:#1e3a5f;font-weight:bold;margin:14px 0 6px',
-    h3: 'font-size:19px;color:#2c5282;font-weight:bold;margin:12px 0 4px',
-    h4: 'font-size:18px;color:#3a6ba5;font-weight:bold;margin:10px 0 4px',
-    h5: 'font-size:17px;color:#4d7eb8;font-weight:bold;margin:8px 0 3px',
-    h6: 'font-size:16px;color:#608fc8;font-weight:bold;margin:6px 0 3px',
-    p: 'font-size:17px;color:#1e293b;line-height:1.8;margin:8px 0',
-    blockquote: 'font-size:17px;color:#475569;border-left:3px solid #185FA5;padding:8px 16px;margin:12px 0;background:#f0f6ff',
-    ul: 'padding-left:24px;margin:8px 0',
-    ol: 'padding-left:24px;margin:8px 0',
-    li: 'margin:4px 0;font-size:17px;color:#1e293b',
-    img: 'max-width:100%;border-radius:4px;margin:12px 0',
-    a: 'color:#185FA5;text-decoration:underline',
-    code: 'font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;background:#e8f0fe;padding:1px 5px;border-radius:3px;color:#185FA5',
-    pre: 'background:#f8fafc;padding:12px 16px;border-radius:6px;overflow-x:auto;font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;line-height:1.6;margin:10px 0;color:#1e293b;border:1px solid #e2e8f0',
-    hr: 'border:0;border-top:1px solid #cbd5e1;margin:16px 0',
-    table: 'border-collapse:collapse;width:100%;margin:10px 0;font-size:15px',
-    th: 'background:#e8f0fe;font-weight:bold;padding:8px 12px;border:0.5px solid #cbd5e1;color:#1e3a5f',
-    td: 'padding:8px 12px;border:0.5px solid #cbd5e1;color:#1e293b',
-    strong: 'font-weight:600;color:#0f172a',
-    em: 'font-style:italic;color:#475569',
-    del: 'text-decoration:line-through;opacity:0.7',
-    mark: 'background:#fef9c3;padding:1px 3px;border-radius:2px',
-    nestedList: 'margin-left:8px;font-size:15px',
-    uiAccent: '#5c8db8'
-  },
-  warm_coffee: {
-    body: "background:#faf6f1;font-family:'PingFang SC','Microsoft YaHei',KaiTi,serif;color:#3d2b1f;padding:20px 16px;max-width:100%",
-    h1: 'font-size:32px;color:#6f4e37;font-weight:bold;margin:16px 0 8px;border-bottom:1.5px solid #a0846c;padding-bottom:8px',
-    h2: 'font-size:22px;color:#5a3f2c;font-weight:bold;margin:14px 0 6px',
-    h3: 'font-size:19px;color:#6f4e37;font-weight:bold;margin:12px 0 4px',
-    h4: 'font-size:18px;color:#7a5942;font-weight:bold;margin:10px 0 4px',
-    h5: 'font-size:17px;color:#8b6b52;font-weight:bold;margin:8px 0 3px',
-    h6: 'font-size:16px;color:#9c7d65;font-weight:bold;margin:6px 0 3px',
-    p: 'font-size:17px;color:#3d2b1f;line-height:1.8;margin:8px 0',
-    blockquote: 'font-size:17px;color:#6b5b4e;border-left:3px solid #a0846c;padding:8px 16px;margin:12px 0;background:#f3ede6',
-    ul: 'padding-left:24px;margin:8px 0',
-    ol: 'padding-left:24px;margin:8px 0',
-    li: 'margin:4px 0;font-size:17px;color:#3d2b1f',
-    img: 'max-width:100%;border-radius:8px;margin:12px 0',
-    a: 'color:#6f4e37;text-decoration:underline',
-    code: 'font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;background:#ede3d8;padding:1px 5px;border-radius:3px;color:#6f4e37',
-    pre: 'background:#f3ede6;padding:12px 16px;border-radius:6px;overflow-x:auto;font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;line-height:1.6;margin:10px 0;color:#3d2b1f',
-    hr: 'border:0;border-top:1px solid #d4c5b3;margin:16px 0',
-    table: 'border-collapse:collapse;width:100%;margin:10px 0;font-size:15px',
-    th: 'background:#ede3d8;font-weight:bold;padding:8px 12px;border:0.5px solid #d4c5b3;color:#3d2b1f',
-    td: 'padding:8px 12px;border:0.5px solid #d4c5b3;color:#3d2b1f',
-    strong: 'font-weight:600;color:#2a1a10',
-    em: 'font-style:italic;color:#6b5b4e',
-    del: 'text-decoration:line-through;opacity:0.7',
-    mark: 'background:#fef3cd;padding:1px 3px;border-radius:2px',
-    nestedList: 'margin-left:8px;font-size:15px',
-    uiAccent: '#a0846c'
-  },
-  ink_literati: {
-    body: "background:#fcfaf7;font-family:'PingFang SC','Microsoft YaHei','SimSun','Noto Serif SC',serif;color:#2c3e50;padding:20px 16px;max-width:100%",
-    h1: 'font-size:34px;color:#1a1a2e;font-weight:bold;margin:20px 0 10px;border-bottom:1.5px solid #2c3e50;padding-bottom:10px;letter-spacing:2px',
-    h2: 'font-size:24px;color:#2c3e50;font-weight:bold;margin:18px 0 8px',
-    h3: 'font-size:20px;color:#34495e;font-weight:bold;margin:14px 0 6px',
-    h4: 'font-size:18px;color:#3d566e;font-weight:bold;margin:12px 0 5px',
-    h5: 'font-size:17px;color:#4a6a82;font-weight:bold;margin:10px 0 4px',
-    h6: 'font-size:16px;color:#5a7d96;font-weight:bold;margin:8px 0 3px',
-    p: 'font-size:17px;color:#2c3e50;line-height:2;margin:10px 0;letter-spacing:0.5px',
-    blockquote: 'font-size:17px;color:#546e7a;border-left:3px solid #2c3e50;padding:10px 18px;margin:14px 0;background:#f5f2ed;font-style:italic',
-    ul: 'padding-left:24px;margin:8px 0',
-    ol: 'padding-left:24px;margin:8px 0',
-    li: 'margin:5px 0;font-size:17px;color:#2c3e50;line-height:1.9',
-    img: 'max-width:100%;border-radius:2px;margin:14px 0',
-    a: 'color:#2c3e50;text-decoration:underline;text-underline-offset:3px',
-    code: 'font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;background:#f0ede6;padding:1px 5px;border-radius:3px;color:#2c3e50',
-    pre: 'background:#f5f2ed;padding:14px 18px;border-radius:4px;overflow-x:auto;font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;line-height:1.7;margin:12px 0;color:#2c3e50;border:1px solid #e8e3da',
-    hr: 'border:0;border-top:1px solid #d5cec4;margin:20px 0',
-    table: 'border-collapse:collapse;width:100%;margin:10px 0;font-size:15px',
-    th: 'background:#f0ede6;font-weight:bold;padding:8px 12px;border:0.5px solid #d5cec4;color:#2c3e50',
-    td: 'padding:8px 12px;border:0.5px solid #d5cec4;color:#2c3e50',
-    strong: 'font-weight:700;color:#1a1a2e',
-    em: 'font-style:italic;color:#546e7a',
-    del: 'text-decoration:line-through;opacity:0.7',
-    mark: 'background:#f5f0e0;padding:1px 3px;border-radius:2px',
-    nestedList: 'margin-left:8px;font-size:15px',
-    uiAccent: '#6b8299'
-  },
-  study_notes: {
-    body: "background:#fff;font-family:'PingFang SC','Microsoft YaHei','Hiragino Sans GB',sans-serif;color:#1a1a2e;padding:20px 16px;max-width:100%",
-    h1: 'font-size:30px;color:#1565c0;font-weight:bold;margin:18px 0 8px;border-bottom:2px solid #1565c0;padding-bottom:8px',
-    h2: 'font-size:22px;color:#1e40af;font-weight:bold;margin:16px 0 6px;border-left:4px solid #1565c0;padding-left:10px',
-    h3: 'font-size:19px;color:#1d4ed8;font-weight:bold;margin:14px 0 6px',
-    h4: 'font-size:18px;color:#2563eb;font-weight:bold;margin:12px 0 5px',
-    h5: 'font-size:17px;color:#3b82f6;font-weight:bold;margin:10px 0 4px',
-    h6: 'font-size:16px;color:#60a5fa;font-weight:bold;margin:8px 0 3px',
-    p: 'font-size:17px;color:#1a1a2e;line-height:1.8;margin:8px 0',
-    blockquote: 'font-size:16px;color:#5d4037;border-left:3px solid #ff9800;padding:8px 16px;margin:12px 0;background:#FFF8E1;border-radius:0 4px 4px 0',
-    ul: 'padding-left:24px;margin:8px 0',
-    ol: 'padding-left:24px;margin:8px 0',
-    li: 'margin:4px 0;font-size:17px;color:#1a1a2e',
-    img: 'max-width:100%;border-radius:6px;margin:12px 0',
-    a: 'color:#1565c0;text-decoration:underline',
-    code: 'font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;background:#e3f2fd;padding:1px 5px;border-radius:3px;color:#1565c0',
-    pre: 'background:#f5f7fa;padding:12px 16px;border-radius:6px;overflow-x:auto;font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;line-height:1.6;margin:10px 0;color:#1a1a2e;border:1px solid #e2e8f0',
-    hr: 'border:0;border-top:1px solid #cbd5e1;margin:16px 0',
-    table: 'border-collapse:collapse;width:100%;margin:10px 0;font-size:15px',
-    th: 'background:#e3f2fd;font-weight:bold;padding:8px 12px;border:0.5px solid #bbdefb;color:#1a1a2e',
-    td: 'padding:8px 12px;border:0.5px solid #bbdefb;color:#1a1a2e',
-    strong: 'font-weight:600;color:#0d47a1',
-    em: 'font-style:italic;color:#546e7a',
-    del: 'text-decoration:line-through;opacity:0.7',
-    mark: 'background:#fff9c4;padding:1px 3px;border-radius:2px',
-    nestedList: 'margin-left:8px;font-size:15px',
-    uiAccent: '#5a8ec8'
-  },
-  forest_nature: {
-    body: "background:#f3f8f4;font-family:'PingFang SC','Microsoft YaHei',KaiTi,serif;color:#2d3a2d;padding:20px 16px;max-width:100%",
-    h1: 'font-size:32px;color:#2d6a4f;font-weight:bold;margin:16px 0 8px;border-bottom:2px solid #40916c;padding-bottom:8px',
-    h2: 'font-size:22px;color:#1b4332;font-weight:bold;margin:14px 0 6px',
-    h3: 'font-size:19px;color:#2d6a4f;font-weight:bold;margin:12px 0 4px',
-    h4: 'font-size:18px;color:#40916c;font-weight:bold;margin:10px 0 4px',
-    h5: 'font-size:17px;color:#52b788;font-weight:bold;margin:8px 0 3px',
-    h6: 'font-size:16px;color:#74c69d;font-weight:bold;margin:6px 0 3px',
-    p: 'font-size:17px;color:#2d3a2d;line-height:1.8;margin:8px 0',
-    blockquote: 'font-size:17px;color:#4a5d4a;border-left:3px solid #40916c;padding:8px 16px;margin:12px 0;background:#e8f5e9',
-    ul: 'padding-left:24px;margin:8px 0',
-    ol: 'padding-left:24px;margin:8px 0',
-    li: 'margin:4px 0;font-size:17px;color:#2d3a2d',
-    img: 'max-width:100%;border-radius:8px;margin:12px 0',
-    a: 'color:#2d6a4f;text-decoration:underline',
-    code: 'font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;background:#d8f3dc;padding:1px 5px;border-radius:3px;color:#2d6a4f',
-    pre: 'background:#e8f5e9;padding:12px 16px;border-radius:6px;overflow-x:auto;font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;line-height:1.6;margin:10px 0;color:#2d3a2d;border:1px solid #c8e6c9',
-    hr: 'border:0;border-top:1px solid #a5d6a7;margin:16px 0',
-    table: 'border-collapse:collapse;width:100%;margin:10px 0;font-size:15px',
-    th: 'background:#d8f3dc;font-weight:bold;padding:8px 12px;border:0.5px solid #a5d6a7;color:#1b4332',
-    td: 'padding:8px 12px;border:0.5px solid #a5d6a7;color:#2d3a2d',
-    strong: 'font-weight:600;color:#1b4332',
-    em: 'font-style:italic;color:#4a5d4a',
-    del: 'text-decoration:line-through;opacity:0.7',
-    mark: 'background:#fff9c4;padding:1px 3px;border-radius:2px',
-    nestedList: 'margin-left:8px;font-size:15px',
-    uiAccent: '#6b9e85'
-  },
-  orange_vibe: {
-    body: "background:#fff8f3;font-family:'PingFang SC','Microsoft YaHei','Hiragino Sans GB',sans-serif;color:#3d2e1f;padding:20px 16px;max-width:100%",
-    h1: 'font-size:34px;color:#e8590c;font-weight:bold;margin:16px 0 8px;border-bottom:3px solid #ff922b;padding-bottom:8px',
-    h2: 'font-size:24px;color:#d9480f;font-weight:bold;margin:14px 0 6px',
-    h3: 'font-size:20px;color:#e8590c;font-weight:bold;margin:12px 0 4px',
-    h4: 'font-size:18px;color:#f08c00;font-weight:bold;margin:10px 0 4px',
-    h5: 'font-size:17px;color:#f59f00;font-weight:bold;margin:8px 0 3px',
-    h6: 'font-size:16px;color:#faa419;font-weight:bold;margin:6px 0 3px',
-    p: 'font-size:17px;color:#3d2e1f;line-height:1.8;margin:8px 0',
-    blockquote: 'font-size:17px;color:#7a6248;border-left:3px solid #ff922b;padding:8px 16px;margin:12px 0;background:#fff0e0',
-    ul: 'padding-left:24px;margin:8px 0',
-    ol: 'padding-left:24px;margin:8px 0',
-    li: 'margin:4px 0;font-size:17px;color:#3d2e1f',
-    img: 'max-width:100%;border-radius:10px;margin:12px 0',
-    a: 'color:#e8590c;text-decoration:underline',
-    code: 'font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;background:#ffe8d6;padding:1px 5px;border-radius:3px;color:#e8590c',
-    pre: 'background:#fff0e0;padding:12px 16px;border-radius:6px;overflow-x:auto;font-size:15px;font-family:Consolas,Monaco,"Courier New",monospace;line-height:1.6;margin:10px 0;color:#3d2e1f;border:1px solid #ffd8a8',
-    hr: 'border:0;border-top:1px solid #ffc078;margin:16px 0',
-    table: 'border-collapse:collapse;width:100%;margin:10px 0;font-size:15px',
-    th: 'background:#ffe8d6;font-weight:bold;padding:8px 12px;border:0.5px solid #ffc078;color:#3d2e1f',
-    td: 'padding:8px 12px;border:0.5px solid #ffc078;color:#3d2e1f',
-    strong: 'font-weight:600;color:#d9480f',
-    em: 'font-style:italic;color:#7a6248',
-    del: 'text-decoration:line-through;opacity:0.7',
-    mark: 'background:#fff3bf;padding:1px 3px;border-radius:2px',
-    nestedList: 'margin-left:8px;font-size:15px',
-    uiAccent: '#d49070'
-  }
-};
-
-// ---------- Markdown → HTML（纯前端）----------
-const buildHtml = (md, theme, overrides, brand) => {
-  const base = THEMES[theme] || THEMES.serif_news;
-  const t = { ...base };
-  // 品牌色：重染强调色（标题 / 链接 / 引用分割线），正文与背景保留主题调性
-  if (brand && brand.color) {
-    ['h1', 'a', 'blockquote'].forEach(tag => {
-      if (t[tag]) {
-        t[tag] = t[tag]
-          .replace(/color:[^;]+/, 'color:' + brand.color)
-          // 只换边框颜色、保留主题的宽度/线型（避免整串替换把 3px solid 写死，
-          // 否则其他主题的分隔线宽度/虚线样式会被品牌重染强制覆盖）
-          .replace(/(border-left:[^;]*?)(#[0-9a-fA-F]{3,8})/i, '$1' + brand.color);
-      }
-    });
-  }
-  // 品牌字体：覆盖正文 font-family
-  if (brand && brand.font) {
-    t.body = t.body.replace(/font-family:[^;]+/, 'font-family:' + brand.font);
-  }
-  // 强制白底 + 深色正文，保证预览/导出与公众号白底阅读一致（所见即所得）
-  t.body = t.body
-    .replace(/background:[^;]+/, 'background:#ffffff')
-    .replace(/color:[^;]+/, 'color:#1a1a1a');
-  // 预处理：::: container 语法 → raw HTML div（marked 保留不处理，用户可见可编辑）
-  // remark-stringify 会把 ::: 转义为 \:::，先清理转义
-  md = md.replace(/\\(:::[^\n]*)/g, '$1');
-  md = md.replace(/::: (\w+)\n([\s\S]*?)\n:::/g, (_, type, content) =>
-    `<div data-decor="${type}">${content.trim()}</div>`);
-
-  let html = marked.parse(md);
-
-  // 三层级联配色：主题 h1 强调色 → 品牌色覆盖 → 装饰渲染消费
-  const themeAccent = (t.h1 || '').match(/color:\s*(#[0-9a-fA-F]{3,8})/i)?.[1] || '#333';
-  const quoteBg = (t.blockquote || '').match(/background:\s*(#[0-9a-fA-F]{3,8})/i)?.[1] || _brandShade(themeAccent, 82);
-  const quoteText = (t.blockquote || '').match(/color:\s*(#[0-9a-fA-F]{3,8})/i)?.[1] || '#555';
-  const decorColor = brand?.color || themeAccent;
-
-  // Post-process: 装饰容器 → 纯 CSS div / styled section（全部微信完美兼容，文字可选中可搜索）
-  html = html.replace(/<div data-decor="cover">([\s\S]*?)<\/div>/g, (_, text) => buildCoverBlock(text.trim(), decorColor));
-  html = html.replace(/<div data-decor="divider">[\s\S]*?<\/div>/g, () => buildDividerBlock(decorColor));
-  html = html.replace(/<div data-decor="quote">([\s\S]*?)<\/div>/g, (_, text) => buildQuoteSection(text.trim(), decorColor, quoteBg, quoteText));
-
-  // 给标签加内联样式（L1: h1-h6/p/blockquote 支持用户覆盖；L2: ul/ol/li/img/a/code/pre/hr/table/th/td 模板注入；L3: strong/em/del/mark 语义增强）
-  const styleableTags = ['h1','h2','h3','h4','h5','h6','p','blockquote','ul','ol','li','img','a','code','pre','hr','table','th','td','strong','em','del','mark'];
-  styleableTags.forEach(tag => {
-    let style = t[tag] || '';
-    if (overrides && overrides[tag]) {
-      const ov = overrides[tag];
-      const parts = [];
-      if (ov['font-size']) parts.push(`font-size:${ov['font-size']}`);
-      if (ov['color']) parts.push(`color:${ov['color']}`);
-      if (ov['line-height']) parts.push(`line-height:${ov['line-height']}`);
-      if (ov['letter-spacing']) parts.push(`letter-spacing:${ov['letter-spacing']}`);
-      // 合并语义：用户覆盖叠在主题样式之上，而非整体替换
-      // （否则只改 h1 颜色会丢失主题的字号/字重/下边框等整套样式，退化成浏览器默认 h1）
-      if (parts.length) style = t[tag] ? t[tag] + ';' + parts.join(';') : parts.join(';');
-    }
-    if (style) {
-      // 匹配「标签名 + 可选属性（含前导空格）」：旧正则 <tag(\s|)> 只能命中无属性标签，
-      // 导致 <a href>、<img src>、<code class> 等带属性标签永远注入不了样式
-      // （链接/图片/代码块样式、品牌色重染链接全部失效）。改用 (\s[^>]*)? 吞掉属性并保留。
-      // 合并而非前置：若标签已有 style（如封面内嵌 <h1 style="margin:0;color">），
-      // 主题样式在前、原 inline 在后，让内联的 margin:0/color 优先，且不会产生重复 style 属性
-      html = html.replace(new RegExp(`<${tag}((?:\\s[^>]*)?)>`, 'g'), (_, attrs = '') =>
-        /style="/.test(attrs)
-          ? `<${tag}${attrs.replace(/style="([^"]*)"/, `style="${style};$1"`)}>`
-          : `<${tag}${attrs} style="${style}">`
-      );
-    }
-  });
-
-  // Post-process A: 嵌套列表深度注入（二级 ul/ol 缩进 + 减小字号）
-  // 注意：marked 渲染嵌套列表时，内层 <ul>/<ol> 紧跟在 <li> 文本之后（中间有文字、无空白），
-  // 旧正则 /(<li[^>]*>)\s*(<(?:ul|ol))/ 要求 <li> 后紧跟空白再跟列表，实际 0 命中（功能从未生效）。
-  // 改用负向前瞻 (?:(?!<\/li>)[\s\S])*? 限制只匹配「同一 <li> 内首个嵌套列表」，避免跨 <li> 误配。
-  if (t.nestedList) {
-    html = html.replace(/(<li[^>]*>)(?:(?!<\/li>)[\s\S])*?<(ul|ol)(\s[^>]*)?>/g, (_, li, list, attrs = '') => {
-      const merged = attrs.includes('style=')
-        ? attrs.replace(/style="([^"]*)"/, `style="$1;${t.nestedList}"`)
-        : `${attrs} style="${t.nestedList}"`;
-      return `${li}<${list}${merged}>`;
-    });
-  }
-
-  // Post-process B: 表格偶数行斑马纹（微信兼容）
-  // 斑马纹色从 body 背景派生：浅色底略深、深色底略浅，避免硬编码 #f9f9f9 在深色主题（如霓虹赛博）下刺眼；
-  // wechat 模式 body 被强制白底，自然得到浅灰斑马纹。
-  if (t.td) {
-    let zebra = '#f4f4f4';
-    const bgMatch = t.body.match(/background:\s*(#[0-9a-fA-F]{6})/);
-    if (bgMatch) {
-      const hex = bgMatch[1];
-      const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
-      const lum = (Math.max(r, g, b) + Math.min(r, g, b)) / 2;
-      const d = lum >= 128 ? -10 : 18;
-      const c = v => Math.max(0, Math.min(255, v + d)).toString(16).padStart(2, '0');
-      zebra = '#' + c(r) + c(g) + c(b);
-    }
-    let isEven = false;
-    html = html.replace(/<tr([^>]*)>/g, (_, attrs) => {
-      if (isEven) {
-        isEven = false;
-        return `<tr${attrs} style="background-color:${zebra}">`;
-      } else {
-        isEven = true;
-        return `<tr${attrs}>`;
-      }
-    });
-  }
-
-  return `<div style="${t.body}">${html}</div>`;
-};
-
-// 渲染 HTML（含品牌与预览模式）；复制/导出恒定微信白底
+// 渲染 HTML（含品牌与预览模式）；复制/导出恒定微信白底。
+// wechatDark 仅预览「模拟微信深色模式」开关使用，复制/导出调用不传（保持浅色）。
 const currentBrand = () => ({
   color: brandColor.value,
   font: brandFont.value ? (BRAND_FONTS[brandFont.value] || '') : ''
 });
-const renderHtml = () =>
-  DOMPurify.sanitize(buildHtml(markdownText.value, currentTheme.value, customOverrides.value, currentBrand()));
+const renderHtml = (wechatDark = false) =>
+  DOMPurify.sanitize(buildHtml(
+    markdownText.value, currentTheme.value, customOverrides.value, currentBrand(),
+    { wechatDark }
+  ));
 
 // ---------- Milkdown 编辑器：getMarkdown / themeToCss ----------
 const getMarkdown = () => {
@@ -1162,31 +802,34 @@ const getMarkdown = () => {
 };
 
 // 估算编辑器当前选区在 markdown 文本中的插入位置（用于在光标处插入内容）
+// 直接从 ProseMirror selection.from 取值，不依赖字符串搜索（lastIndexOf 在重复文本中偏移）
 const getEditorMarkdownOffset = () => {
   if (!milkdownEditor) return markdownText.value.length;
   try {
     return milkdownEditor.action((ctx) => {
       const view = ctx.get(editorViewCtx);
-      const { from } = view.state.selection;
-      // 用 textBetween 获取选区前的纯文本（按 \n 分隔块），在 markdown 中定位
-      const textBefore = view.state.doc.textBetween(0, from, '\n');
-      if (!textBefore) return 0;
-      const idx = markdownText.value.lastIndexOf(textBefore);
-      return idx >= 0 ? idx + textBefore.length : markdownText.value.length;
+      return view.state.selection.from;
     });
-  } catch (e) {
+  } catch (_) {
     return markdownText.value.length;
   }
 };
 
 // 用 replaceAll 安全替换编辑器内容（外部按钮/AI/导入等统一入口）
 const setEditorMarkdown = (md) => {
+  // 所有进入编辑器解析的入口统一先做裸 ::: 清理（见 stripBareDirectives / Bug A），
+  // 否则裸 ::: 与草稿里可能的 ::: cover 占位块会错位误判成封面卡片。
+  const clean = stripBareDirectives(md);
   if (milkdownEditor) {
     isSettingEditor = true;
-    milkdownEditor.action(replaceAll(md));
+    milkdownEditor.action(replaceAll(clean));
+    // 必须同步回写 markdownText：预览/复制/导出 (renderHtml) 都读 markdownText.value，
+    // 而 markdownUpdated 监听器在 isSettingEditor 期间会早退、不回写，若这里不补，
+    // 程序化改写的装饰块/图片/AI 结果会出现「编辑区有、预览与复制结果没有」的滞后。
+    markdownText.value = clean;
     isSettingEditor = false;
   } else {
-    markdownText.value = md;
+    markdownText.value = clean;
   }
 };
 
@@ -1194,32 +837,27 @@ const setEditorMarkdown = (md) => {
 // 与 buildHtml 共用同一份 THEMES + 品牌色 + 覆盖逻辑，保证所见即所得
 const editorThemeCss = computed(() => {
   const base = THEMES[currentTheme.value] || THEMES.serif_news;
-  const t = { ...base };
+  let t = { ...base };
   const brand = currentBrand();
 
-  // 装饰元素配色：与 buildHtml 完全一致（从 base 主题提取，避免品牌覆盖后错位）
-  const themeAccent = (base.h1 || '').match(/color:\s*(#[0-9a-fA-F]{3,8})/i)?.[1] || '#333';
-  const quoteBg = (base.blockquote || '').match(/background:\s*(#[0-9a-fA-F]{3,8})/i)?.[1] || _brandShade(themeAccent, 82);
-  const quoteText = (base.blockquote || '').match(/color:\s*(#[0-9a-fA-F]{3,8})/i)?.[1] || '#555';
-  const decorColor = brand.color || themeAccent;
+  // 品牌色/字体重染（使用共享函数，保证与 buildHtml 一致，且必须在 themeAccent 提取之前）
+  applyBrandToTheme(t, brand);
+  // 深色模式：整主题派生为暗色版（背景转暗、正文转浅、强调色提亮），
+  // 不再只改 body 底色——否则 h1/p/li 仍是浅色主题色值在深底下看不见。
+  // 浅色模式：沿用白底深字（与公众号白底阅读一致）。
+  if (isDarkMode.value) {
+    t = deriveDarkTheme(t);
+  } else {
+    t.body = t.body
+      .replace(/background:[^;]+/, 'background:#ffffff')
+      .replace(/color:[^;]+/, 'color:#1a1a1a');
+  }
 
-  // 品牌色：重染强调色（与 buildHtml 完全一致）
-  if (brand.color) {
-    ['h1', 'a', 'blockquote'].forEach(tag => {
-      if (t[tag]) {
-        t[tag] = t[tag]
-          .replace(/color:[^;]+/, 'color:' + brand.color)
-          .replace(/(border-left:[^;]*?)(#[0-9a-fA-F]{3,8})/i, '$1' + brand.color);
-      }
-    });
-  }
-  if (brand.font) {
-    t.body = t.body.replace(/font-family:[^;]+/, 'font-family:' + brand.font);
-  }
-  // 强制白底 + 深色正文（与 buildHtml 一致）
-  t.body = t.body
-    .replace(/background:[^;]+/, 'background:#ffffff')
-    .replace(/color:[^;]+/, 'color:#1a1a1a');
+  // 装饰元素配色：从品牌覆盖后的 t 提取，与 buildHtml 完全一致
+  const themeAccent = (t.h1 || '').match(/color:\s*(#[0-9a-fA-F]{3,8})/i)?.[1] || '#333';
+  const quoteBg = (t.blockquote || '').match(/background:\s*(#[0-9a-fA-F]{3,8})/i)?.[1] || _brandShade(themeAccent, 82);
+  const quoteText = (t.blockquote || '').match(/color:\s*(#[0-9a-fA-F]{3,8})/i)?.[1] || '#555';
+  const decorColor = brand.color || themeAccent;
 
   const styleableTags = ['h1','h2','h3','h4','h5','h6','p','blockquote','ul','ol','li','img','a','code','pre','hr','table','th','td','strong','em','del','mark'];
   const rules = [];
@@ -1232,6 +870,9 @@ const editorThemeCss = computed(() => {
   // 装饰元素在编辑器内的渲染样式
   rules.push(`.milkdown-theme-editor .milkdown-decor-cover { text-align: center; padding: 36px 20px 32px; margin: 32px 0; border-top: 3px solid var(--decor-color); border-bottom: 1px solid var(--decor-color); }`);
   rules.push(`.milkdown-theme-editor .milkdown-decor-cover h1 { margin: 0; color: var(--decor-color); }`);
+  // 空封面/金句块的占位提示（插入时不含「点击编辑文字」文字，避免成为 misparse 种子，故用 CSS 提示）
+  rules.push(`.milkdown-theme-editor .milkdown-decor-cover h1:empty::before { content: "点击编辑文字"; color: #b9b9b9; font-weight: 400; }`);
+  rules.push(`.milkdown-theme-editor .milkdown-decor-quote:empty::before { content: "点击编辑文字"; color: #b9b9b9; }`);
   rules.push(`.milkdown-theme-editor .milkdown-decor-divider { text-align: center; color: var(--decor-color); font-size: 20px; letter-spacing: 14px; margin: 28px 0; line-height: 1; }`);
   rules.push(`.milkdown-theme-editor .milkdown-decor-quote { margin: 16px 0; padding: 20px 24px; border-radius: 8px; border-left: 4px solid var(--decor-color); background: var(--quote-bg); color: var(--quote-text); font-size: 17px; line-height: 1.8; }`);
 
@@ -1244,7 +885,7 @@ const editorThemeCss = computed(() => {
       if (ov['font-size']) parts.push(`font-size:${ov['font-size']}`);
       if (ov['color']) parts.push(`color:${ov['color']}`);
       if (ov['line-height']) parts.push(`line-height:${ov['line-height']}`);
-      if (ov['letter-spacing']) parts.push(`letter-spacing:${ov['letter-spacing']}px`);
+      if (ov['letter-spacing']) parts.push(`letter-spacing:${ov['letter-spacing']}`);
       if (parts.length) style = t[tag] ? t[tag] + ';' + parts.join(';') : parts.join(';');
     }
     if (style) {
@@ -1269,67 +910,24 @@ watch(editorThemeCss, (css) => {
 // ---------- 核心转换 ----------
 const convertMarkdown = () => {
   try {
-    previewHtml.value = renderHtml();
+    previewHtml.value = renderHtml(previewWechatDark.value);
   } catch (error) {
     console.error('转换失败:', error);
     previewHtml.value = '<p style="color:#e03e3e;">⚠️ 内容解析失败，请检查 Markdown 语法</p>';
   }
 };
+// 切换「模拟微信深色模式」时重渲染预览
+watch(previewWechatDark, () => convertMarkdown());
 
-// ---------- 应用自定义样式 ----------
-const applyCustomStyle = () => {
-  if (!selectedTag.value) return;
-  const newStyle = {};
-  if (tempFontSize.value) newStyle['font-size'] = tempFontSize.value + 'px';
-  if (tempColor.value) newStyle['color'] = tempColor.value;
-  if (tempLineHeight.value) newStyle['line-height'] = tempLineHeight.value;
-  if (tempLetterSpacing.value) newStyle['letter-spacing'] = tempLetterSpacing.value + 'px';
-  
-  if (!customOverrides.value[selectedTag.value]) {
-    customOverrides.value[selectedTag.value] = {};
-  }
-  Object.assign(customOverrides.value[selectedTag.value], newStyle);
-  
-  if (Object.keys(customOverrides.value[selectedTag.value]).length === 0) {
-    delete customOverrides.value[selectedTag.value];
-  }
-  
-  saveToStorage();
-  convertMarkdown();
-};
-
-// ---------- 重置单个标签 ----------
-const resetTagStyle = () => {
-  if (selectedTag.value) {
-    delete customOverrides.value[selectedTag.value];
-    saveToStorage();
-    convertMarkdown();
-    loadTagStyle();
-  }
-};
-
-// ---------- 主题名映射 ----------
-const THEME_NAMES = {
-  serif_news: '经典报业',
-  neon_tech: '霓虹赛博',
-  mellow_pink: '温柔奶油',
-  zen_minimal: '禅意极简',
-  biz_blue: '商务蓝调',
-  warm_coffee: '暖咖生活',
-  ink_literati: '墨韵文心',
-  study_notes: '学堂笔记',
-  forest_nature: '森系自然',
-  orange_vibe: '橘光活力'
-};
-
-// ---------- 全文一键套用主题 ----------
-const applyThemeToAll = () => {
-  customOverrides.value = {};
-  saveToStorage();
-  convertMarkdown();
-  loadTagStyle();
-  showToast('已套用「' + (THEME_NAMES[currentTheme.value] || '主题') + '」到全文', 'success');
-};
+// 样式调节逻辑（useStyle composable）
+const { loadTagStyle, applyCustomStyle, resetTagStyle,
+  applyThemeToAll: _applyThemeToAll } = useStyle(
+  customOverrides, selectedTag,
+  tempFontSize, tempColor, tempLineHeight, tempLetterSpacing,
+  convertMarkdown, showToast
+);
+// 包装：模板调用无参，composable 需要 currentTheme
+const applyThemeToAll = () => _applyThemeToAll(currentTheme);
 
 // ---------- 品牌色 / 字体（Gamma 式重染）----------
 const BRAND_FONTS = {
@@ -1339,75 +937,21 @@ const BRAND_FONTS = {
   deng: "'DengXian','PingFang SC','Microsoft YaHei',sans-serif"
 };
 
-const saveBrand = () => {
-  localStorage.setItem('podcast_brand', JSON.stringify({ color: brandColor.value, font: brandFont.value }));
-};
-
 const applyBrand = () => {
   saveBrand();
   convertMarkdown();
 };
 
+// clearBrandColor 包装以触发 convertMarkdown
 const clearBrandColor = () => {
-  brandColor.value = '';
-  applyBrand();
+  _brandClearColor();
+  convertMarkdown();
 };
 
-// ---------- 装饰元素（纯前端，不联网）----------
-// 颜色派生：主题色 / 品牌色 → HSL 暗 / 浅底
-const _brandShade = (hex, dL = -10) => {
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
-  const toHSL = (rr, gg, bb) => {
-    const max = Math.max(rr, gg, bb), min = Math.min(rr, gg, bb);
-    let h, s, l = (max + min) / 2;
-    if (max === min) { h = s = 0; }
-    else {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      switch (max) {
-        case rr: h = ((gg - bb) / d + (gg < bb ? 6 : 0)) / 6; break;
-        case gg: h = ((bb - rr) / d + 2) / 6; break;
-        case bb: h = ((rr - gg) / d + 4) / 6; break;
-      }
-    }
-    return [h * 360, s * 100, l * 100];
-  };
-  const toHex = (hh, ss, ll) => {
-    ss = Math.max(0, Math.min(100, ss)) / 100;
-    // 浅底上限 94%：避免品牌色偏亮时浅底被钳成纯白，失去品牌色调
-    ll = Math.max(0, Math.min(94, ll)) / 100;
-    const hue2rgb = (p, q, t) => {
-      if (t < 0) t += 1; if (t > 1) t -= 1;
-      if (t < 1 / 6) return p + (q - p) * 6 * t;
-      if (t < 1 / 2) return q;
-      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-      return p;
-    };
-    const q = ll < 0.5 ? ll * (1 + ss) : ll + ss - ll * ss;
-    const p = 2 * ll - q;
-    return '#' + [hue2rgb(p, q, hue2rgb(p, q, hh + 1 / 3)), hue2rgb(p, q, hh), hue2rgb(p, q, hh - 1 / 3)]
-      .map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('');
-  };
-  const [h, s, l] = toHSL(r, g, b);
-  return toHex(h / 360, s, l + dL);
-};
-
-// 封面卡片：纯 CSS（上下品牌色边线 + 居中标题，文字可选中可搜索，微信完美兼容）
-// 嵌套 <h1> 让主题样式（字号/字重/字间距/字体）自动继承，覆盖项也能直接生效
-const buildCoverBlock = (text, decorColor) => {
-  return `<div style="text-align:center;padding:36px 20px 32px;margin:32px 0;border-top:3px solid ${decorColor};border-bottom:1px solid ${decorColor};"><h1 style="margin:0;color:${decorColor};">${text}</h1></div>`;
-};
-
-// 分割线：纯 CSS 字符（微信完美兼容，比 SVG 更轻更稳）
-const buildDividerBlock = (decorColor) => {
-  return `<div style="text-align:center;color:${decorColor};font-size:20px;letter-spacing:14px;margin:28px 0;line-height:1;">※ ※ ※</div>`;
-};
-
-// 金句卡片：styled section（微信对内联 style 支持更稳定，支持多行自动换行）
-const buildQuoteSection = (text, decorColor, quoteBg, quoteText) => {
-  return `<section style="margin:16px 0;padding:20px 24px;border-radius:8px;border-left:4px solid ${decorColor};background:${quoteBg};color:${quoteText};font-size:17px;line-height:1.8;">${text}</section>`;
+// clearBrandFont 包装以触发 convertMarkdown（与 clearBrandColor 对称）
+const clearBrandFont = () => {
+  _brandClearFont();
+  convertMarkdown();
 };
 
 // ---------- Milkdown 装饰节点插件（cover / divider / quote） ----------
@@ -1423,7 +967,15 @@ const createDirectiveNode = (type) => $nodeSchema(type, () => ({
   parseMarkdown: {
     match: (node) => node.type === 'containerDirective' && node.name === type,
     runner: (state, node, nodeType) => {
-      const text = node.children?.map(c => c.value || '').join('') || '';
+      // 容器指令的子节点是「块级节点」(如 paragraph)，其文本在 children[].value 或
+      // 更深层的 children 里；不能只取顶层 c.value（顶层是 paragraph，没有 value）。
+      // 必须递归收集所有文本，否则封面/金句的标题文字会丢失（此前 ::: 语法未生效，此 bug 潜伏）。
+      const collect = (n) => {
+        if (n.value != null) return n.value;
+        if (Array.isArray(n.children)) return n.children.map(collect).join('');
+        return '';
+      };
+      const text = (node.children || []).map(collect).join('');
       state.openNode(nodeType, { type });
       if (type !== 'divider' && text) state.addText(text);
       state.closeNode();
@@ -1433,10 +985,13 @@ const createDirectiveNode = (type) => $nodeSchema(type, () => ({
     match: (n) => n.type.name === type,
     runner: (state, node) => {
       state.openNode('containerDirective', { name: type });
+      // 注意：此处 state 是「序列化器状态(SerializerStack)」，没有 addText 方法。
+      // 加文本必须用 state.next(node.content) 递归交给文本节点自行序列化
+      // （与 Milkdown preset-commonmark 的 paragraph toMarkdown 一致）。
+      // 之前误用 state.addText 会在插入 quote/cover 时抛
+      // "addText is not a function"，导致整个文档序列化崩溃、预览错位。
       if (type !== 'divider') {
-        state.openNode('paragraph');
-        state.addText(node.textContent || '');
-        state.closeNode();
+        state.next(node.content);
       }
       state.closeNode();
     },
@@ -1465,46 +1020,116 @@ const quoteDirective = createDirectiveNode('quote');
 // 光标处插入装饰块（::: container 语法，编辑器内可视化）
 const insertDecorBlock = (type) => {
   const labels = { cover: '封面卡片', divider: '分割线', quote: '金句卡片' };
-  const content = type === 'divider'
-    ? '\n::: divider\n\n:::\n'
-    : `\n::: ${type}\n点击编辑文字\n:::\n`;
-
-  const md = getMarkdown();
-  const offset = getEditorMarkdownOffset();
-  const newMd = md.slice(0, offset) + content + md.slice(offset);
+  // 插入「空内容」装饰块，占位提示「点击编辑文字」由 CSS :empty::before 渲染（见 editorThemeCss）。
+  // 关键点：绝不能插入带「点击编辑文字」占位文字的块。该文字会与文档中偶发的裸 ::: 相邻，
+  // 被浏览器 remark-directive 误判成真 cover 节点（并产生自我循环的裸 ::: artifact）。
+  // 空块序列化为 `:::cover\n\n:::`（注意：remark-directive 语法要求 ::: 后「无空格」紧跟类型名，
+  // 写成 `::: cover` 会被当成普通文本而不解析为容器节点）。无任何内部文本，不会成为 misparse 种子。
+  const blockText = '\n:::' + type + '\n\n:::\n';
 
   if (milkdownEditor) {
-    isSettingEditor = true;
-    milkdownEditor.action(replaceAll(newMd));
-    isSettingEditor = false;
+    // 直接 Markdown 文本操作 + setEditorMarkdown（replaceAll），
+    // 确保 remark-directive 正确解析 ::: 容器语法为可视化节点
+    // 注意：insertText('::: syntax') 不会触发 remark-directive 解析，
+    // 因为 insertText 跳过 Markdown 解析器直接写 ProseMirror 文本节点
+    const offset = getEditorMarkdownOffset();
+    const md = markdownText.value;
+    const newMd = md.slice(0, offset) + blockText + md.slice(offset);
+    setEditorMarkdown(newMd);
   } else {
+    const md = markdownText.value;
+    const newMd = md + blockText;
     markdownText.value = newMd;
   }
   showToast(`已插入${labels[type] || '装饰元素'}`, 'success');
 };
 
-const insertImageByUrl = () => {
-  if (!imageUrl.value.trim()) {
-    showToast('请先粘贴图片链接', 'error');
-    return;
+// ===== 上下文工具栏：标题层级 =====
+const setHeadingLevel = (level) => {
+  if (!milkdownEditor) return;
+  try {
+    // 通过 execCommand 修改标题层级
+    milkdownEditor.action((ctx) => {
+      const view = ctx.get(editorViewCtx);
+      if (!view) return;
+      const { state } = view;
+      // 使用 ProseMirror 的 setBlockType 来设置标题层级
+      const nodeType = state.schema.nodes.heading;
+      if (nodeType) {
+        const tr = state.tr;
+        view.dispatch(tr.setBlockType(state.selection.from, state.selection.to, nodeType, { level }));
+      }
+    });
+    // 同步 markdownText（设 isSettingEditor 防止 sync watcher 执行 replaceAll）
+    nextTick(() => {
+      isSettingEditor = true;
+      markdownText.value = getMarkdown();
+      isSettingEditor = false;
+    });
+    showToast(`已设为 H${level}`, 'success');
+  } catch (_) {
+    showToast('设置失败，请确保光标在文本行上', 'error');
   }
-  insertImage(imageUrl.value.trim(), '图片');
-  imageUrl.value = '';
-  showToast('已插入图片', 'success');
 };
 
-// ---------- 插入图片到编辑器 ----------
-const insertImage = (url, alt) => {
-  const imageMarkdown = `\n![${alt || '图片'}](${url})\n`;
-  const md = getMarkdown();
-  const offset = getEditorMarkdownOffset();
-  const newMd = md.slice(0, offset) + imageMarkdown + md.slice(offset);
-  if (milkdownEditor) {
-    milkdownEditor.action(replaceAll(newMd));
-  } else {
-    markdownText.value = newMd;
+// ===== 选区辅助：从 ProseMirror 获取精确的选中 Markdown 文本 =====
+// 使用 serializer 而非 window.getSelection()，因为 DOM 选区丢失了 markdown 格式标记（如 **bold**）
+const getSelectedMarkdown = () => {
+  if (!milkdownEditor) {
+    return window.getSelection()?.toString().trim() || '';
   }
-  showToast('图片已插入', 'success');
+  try {
+    return milkdownEditor.action((ctx) => {
+      const view = ctx.get(editorViewCtx);
+      const { from, to, empty } = view.state.selection;
+      if (empty) return '';
+      const serializer = ctx.get(serializerCtx);
+      return serializer(view.state.doc.slice(from, to).content);
+    });
+  } catch (_) {
+    return window.getSelection()?.toString().trim() || '';
+  }
+};
+
+// 用 Markdown 文本替换编辑器选中内容（文档级区间替换，避免序列化不一致）
+// 返回 true 表示替换成功；选区为空或解析失败返回 false（供调用方弹错误提示）
+const replaceSelectedWith = (replacement) => {
+  if (!milkdownEditor) return false;
+  try {
+    return milkdownEditor.action((ctx) => {
+      const view = ctx.get(editorViewCtx);
+      const { from, to, empty } = view.state.selection;
+      if (empty) return false;
+      // replaceRange 走 parserCtx → Slice 的官方路径，自动处理选区跨块边界
+      replaceRange(replacement, { from, to })(ctx);
+      return true;
+    });
+  } catch (_) {
+    return false;
+  }
+};
+
+// 载入示例文章（空状态引导用）
+const loadSampleArticle = () => {
+  setEditorMarkdown(DEFAULT_CONTENT);
+  showToast('已载入示例文章，可以开始体验了', 'success');
+};
+
+// 新手引导：完成 onboarding
+const finishOnboarding = () => {
+  const settings = JSON.parse(localStorage.getItem('podcast_settings') || '{}');
+  settings.onboardingDone = true;
+  localStorage.setItem('podcast_settings', JSON.stringify(settings));
+  showOnboarding.value = false;
+  // B9：结束即进入空编辑态，不再静默覆盖（可能已恢复的）草稿
+};
+
+// 新手引导：跳过 onboarding
+const skipOnboarding = () => {
+  const settings = JSON.parse(localStorage.getItem('podcast_settings') || '{}');
+  settings.onboardingDone = true;
+  localStorage.setItem('podcast_settings', JSON.stringify(settings));
+  showOnboarding.value = false;
 };
 
 // ---------- 清除内联样式 ----------
@@ -1522,6 +1147,9 @@ const clearInlineStyles = () => {
 };
 
 // ---------- 导入并提纯正文（纯本地）----------
+// TurndownService 单例（缓存复用，避免每次导入都 new 实例）
+const _turndown = new TurndownService({ headingStyle: 'atx', bulletListMarker: '-', codeBlockStyle: 'fenced' });
+
 const importFromText = () => {
   const raw = importText.value;
   if (!raw.trim()) {
@@ -1533,14 +1161,21 @@ const importFromText = () => {
     const cleaned = raw
       .replace(/\s+(style|class|width|height)\s*=\s*("[^"]*"|'[^']*')/gi, '')
       .replace(/<\/?(font|span)\b[^>]*>/gi, '');
-    const td = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
-    md = td.turndown(cleaned);
+    md = _turndown.turndown(cleaned);
   } else {
     md = raw;
   }
-  setEditorMarkdown(md.trim());
+  const finalMd = md.trim();
+  const charCount = finalMd.length; // 中文按字符计，符合用户直觉
+  setEditorMarkdown(finalMd);
   importText.value = '';
-  showToast('已提纯并填入编辑器', 'success');
+  activePanel.value = null; // 导入完成后关闭面板，明确反馈去向
+  // 导入后跳转到编辑器顶部，便于从开头审阅
+  nextTick(() => {
+    const view = milkdownEditor?.action((ctx) => ctx.get(editorViewCtx));
+    if (view && view.dom) view.dom.scrollTop = 0;
+  });
+  showToast(`已导入 ${charCount} 字`, 'success');
 };
 
 // ---------- 复制 HTML ----------
@@ -1551,22 +1186,27 @@ const copyHtml = async () => {
     showToast('没有内容可复制', 'error');
     return;
   }
+  // B12：仅当正文含本地 base64 图片时才提示素材库问题（外链图 ![alt](url) 不告警）
+  const hasBase64 = /data:(image|application)\//.test(htmlToCopy);
   try {
     if (navigator.clipboard && window.ClipboardItem) {
       const blob = new Blob([htmlToCopy], { type: 'text/html' });
       await navigator.clipboard.write([new ClipboardItem({ 'text/html': blob })]);
-      showToast('已复制！直接粘贴到微信公众号后台', 'success');
+      onCopySuccess(hasBase64);
       return;
     }
     throw new Error('ClipboardItem 不可用');
   } catch (err) {
     // 兜底：把微信白底 HTML 放进隐藏节点，复制其富文本内容（微信可直接识别）
+    // 用 try/finally 确保无论 execCommand 是否抛异常，DOM 节点都被清理
+    const tmp = document.createElement('div');
+    let cleanup = false;
     try {
-      const tmp = document.createElement('div');
       tmp.style.position = 'fixed';
       tmp.style.left = '-9999px';
       tmp.innerHTML = htmlToCopy;
       document.body.appendChild(tmp);
+      cleanup = true;
       const range = document.createRange();
       range.selectNodeContents(tmp);
       const sel = window.getSelection();
@@ -1575,15 +1215,34 @@ const copyHtml = async () => {
       const ok = document.execCommand('copy');
       sel.removeAllRanges();
       document.body.removeChild(tmp);
+      cleanup = false;
       if (ok) {
-        showToast('已复制！直接粘贴到微信公众号后台', 'success');
+        onCopySuccess(hasBase64);
         return;
       }
       throw new Error('execCommand 复制失败');
     } catch (e2) {
       showToast('复制失败，请手动框选预览区内容复制', 'error');
       console.error(e2);
+    } finally {
+      // execCommand 抛异常后清理 DOM 和选区，防止节点泄露
+      if (cleanup) {
+        try {
+          window.getSelection()?.removeAllRanges();
+          if (tmp.parentNode) tmp.parentNode.removeChild(tmp);
+        } catch (_) {}
+      }
     }
+  }
+};
+
+// B4：复制成功后的发布闭环轻引导（常驻，含一键开微信 + 自检清单）
+const onCopySuccess = (hasBase64) => {
+  publishGuide.value = true;
+  if (hasBase64) {
+    showToast('HTML 已复制。⚠️ 图片为本地 base64 数据，微信会替换为「…」—— 请到微信素材库上传原图后替换。', 'warning', 6000);
+  } else {
+    showToast('HTML 已复制，去微信后台粘贴即可发布', 'success');
   }
 };
 
@@ -1628,7 +1287,7 @@ const exportMarkdown = () => {
 
 const openWeChat = () => {
   window.open('https://mp.weixin.qq.com', '_blank');
-  showToast('已打开微信后台，去粘贴并预览吧', 'success');
+  showToast('已跳转微信后台，粘贴后检查图片是否显示，装饰/金句/分割线自动保留样式', 'success');
 };
 
 // ---------- AI 写作助手（用户自带 Key，纯前端直连）----------
@@ -1641,6 +1300,10 @@ const onAiPresetChange = () => {
   saveAiConfig();
 };
 
+// v-model 拆分后：watch 保持 onAiPresetChange / saveAiConfig 副作用
+watch(aiPreset, () => onAiPresetChange());
+watch([aiKey, aiBaseUrl, aiModel], () => saveAiConfig());
+
 const saveAiConfig = () => {
   localStorage.setItem('podcast_ai_config', JSON.stringify({
     key: aiKey.value,
@@ -1650,56 +1313,42 @@ const saveAiConfig = () => {
   }));
 };
 
+// callAI 包装：注入 Vue reactive 依赖
+let _currentOp = { cancel: () => {} };
 const callAI = async (systemPrompt, userPrompt) => {
-  if (!aiKey.value) {
-    showToast('请先在 AI 设置里填你的 API Key', 'error');
-    return null;
-  }
-  if (!aiBaseUrl.value) {
-    showToast('请填写接口 Base URL（或选个预设）', 'error');
-    return null;
-  }
-  aiLoading.value = true;
-  try {
-    const resp = await fetch(aiBaseUrl.value.replace(/\/$/, '') + '/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + aiKey.value
-      },
-      body: JSON.stringify({
-        model: aiModel.value,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.7
-      })
-    });
-    if (!resp.ok) {
-      const detail = await resp.text().catch(() => '');
-      console.error('AI 接口错误', resp.status, detail);
-      showToast('接口返回 ' + resp.status + '，可能是 Key 无效或厂商禁止浏览器跨域', 'error');
-      return null;
-    }
-    const data = await resp.json();
-    return ((data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '').trim();
-  } catch (e) {
-    console.error(e);
-    showToast('调用失败：' + (e && e.message ? e.message : e) + '。若提示 CORS，请换 OpenRouter 预设或自建代理', 'error');
-    return null;
-  } finally {
-    aiLoading.value = false;
-  }
+  const op = _extCallAI(systemPrompt, userPrompt, {
+    key: aiKey,
+    baseURL: aiBaseUrl,
+    model: aiModel,
+    loading: aiLoading,
+    showToast
+  });
+  _currentOp = op;  // 立即保存操作对象，可在请求完成前取消
+  return op.promise;  // 返回 Promise<string|null>
+};
+const cancelAI = () => { _currentOp.cancel(); };
+
+const runAiAction = (key) => {
+  const actions = {
+    generateTitle: aiGenerateTitle,
+    writeSummary: aiWriteSummary,
+    expand: aiExpand,
+    structure: aiStructure,
+  };
+  if (actions[key]) actions[key]();
 };
 
 const aiGenerateTitle = async () => {
   const res = await callAI(
-    '你是公众号爆款标题专家。根据文章内容，给出 3 个吸引点击的标题，每个一行，不要编号和符号。',
+    '你是公众号爆款标题专家。根据文章内容，给出 3 个吸引点击的标题，每个一行，不要编号、不要符号、不要引号。',
     markdownText.value.slice(0, 4000)
   );
   if (!res) return;
-  const titles = res.split('\n').map(s => s.replace(/^#+\s*/, '').replace(/^[-\d.\s、]+/, '').trim()).filter(Boolean);
+  const titles = res.split('\n').map(s => {
+    const cleaned = s.replace(/^#+\s*/, '').replace(/^[-\d.\s、]+/, '').replace(/^[""']|[""']$/g, '').trim();
+    // 如果 strip 后为空，保留原始内容做兜底
+    return cleaned || s.trim();
+  }).filter(Boolean);
   if (!titles.length) return;
   const lines = markdownText.value.split('\n');
   const idx = lines.findIndex(l => /^#\s/.test(l));
@@ -1725,7 +1374,7 @@ const aiWriteSummary = async () => {
 };
 
 const aiExpand = async () => {
-  const sel = (window.getSelection && window.getSelection().toString().trim()) || '';
+  const sel = getSelectedMarkdown();
   const source = sel || markdownText.value;
   const label = sel ? '选中内容' : '全文';
   const res = await callAI(
@@ -1734,11 +1383,54 @@ const aiExpand = async () => {
   );
   if (!res) return;
   if (sel) {
-    setEditorMarkdown(markdownText.value.split(sel).join(res));
+    if (!replaceSelectedWith(res)) {
+      showToast('替换失败，请重新选中后重试', 'error');
+      return;
+    }
   } else {
     setEditorMarkdown(markdownText.value + '\n\n' + res);
   }
   showToast('已扩写' + label, 'success');
+};
+
+const aiRewrite = async () => {
+  const sel = getSelectedMarkdown();
+  const source = sel || markdownText.value;
+  const label = sel ? '选中内容' : '全文';
+  const res = await callAI(
+    '你是公众号写手。请改写下面内容：保持 Markdown 格式和核心信息不变，但让表达更流畅、更有可读性。只输出改写后的内容，不要解释。',
+    source.slice(0, 4000)
+  );
+  if (!res) return;
+  if (sel) {
+    if (!replaceSelectedWith(res)) {
+      showToast('替换失败，请重新选中后重试', 'error');
+      return;
+    }
+  } else {
+    setEditorMarkdown(res.trim());
+  }
+  showToast('已改写' + label, 'success');
+};
+
+const aiTranslate = async () => {
+  const sel = getSelectedMarkdown();
+  const source = sel || markdownText.value;
+  if (!source.trim()) { showToast('请先选中文字或输入内容', 'error'); return; }
+  const res = await callAI(
+    '你是专业翻译。请将下面内容翻译成中文，保持 Markdown 格式不变。只输出译文，不要解释。',
+    source.slice(0, 4000)
+  );
+  if (!res) return;
+  if (sel) {
+    if (!replaceSelectedWith(res)) {
+      showToast('替换失败，请重新选中后重试', 'error');
+      return;
+    }
+  } else {
+    setEditorMarkdown(res.trim());
+  }
+  showToast('已翻译', 'success');
 };
 
 const aiStructure = async () => {
@@ -1760,16 +1452,11 @@ const onThemeChange = () => {
 };
 
 // ---------- 主题自定义下拉 ----------
-const showThemeDropdown = ref(false);
 const selectTheme = (key) => {
   if (currentTheme.value !== key) {
     currentTheme.value = key;
     onThemeChange();
   }
-  showThemeDropdown.value = false;
-};
-const toggleThemeDropdown = () => {
-  showThemeDropdown.value = !showThemeDropdown.value;
 };
 
 // ---------- 监听编辑器内容变化 ----------
@@ -1779,12 +1466,27 @@ watch(markdownText, () => {
   saveDraft();
 });
 
-// 同步 watch：外部修改 markdownText 时推送到 Milkdown 编辑器
+  // 同步 watch：外部修改 markdownText 时推送到 Milkdown 编辑器
 // 编辑器内部修改时 isFromEditor=true，跳过推送避免循环
 watch(markdownText, (newMd) => {
-  if (!isFromEditor && milkdownEditor) {
+  const willReplace = (!isFromEditor && !isSettingEditor && milkdownEditor);
+  if (import.meta.env?.DEV) console.warn('[SYNCWATCH] isFromEditor=', isFromEditor, 'isSettingEditor=', isSettingEditor, 'willReplace=', willReplace, 'hasCover=', /:::\s*cover/.test(newMd), 'snip=', JSON.stringify(newMd.slice(0, 80)));
+  // 加 !isSettingEditor 闸门：程序化改写（setEditorMarkdown/insert*）已显式同步 markdownText，
+  // 避免这里又把它 replaceAll 推回编辑器，造成冗余事务 / 光标重置。
+  // 进入编辑器解析前统一做裸 ::: 清理，防止错位误判成封面卡片。
+  if (willReplace) {
     isSettingEditor = true;
-    milkdownEditor.action(replaceAll(newMd));
+    if (import.meta.env?.DEV) {
+      const v0 = milkdownEditor.action(ctx => ctx.get(editorViewCtx));
+      const t0 = []; v0.state.doc.forEach(n => t0.push(n.type.name));
+      console.warn('[SYNCWATCH→replaceAll] BEFORE doc=', JSON.stringify(t0), 'md=', JSON.stringify(newMd.slice(0,80)));
+    }
+    milkdownEditor.action(replaceAll(stripBareDirectives(newMd)));
+    if (import.meta.env?.DEV) {
+      const v1 = milkdownEditor.action(ctx => ctx.get(editorViewCtx));
+      const t1 = []; v1.state.doc.forEach(n => t1.push(n.type.name + (n.textContent?':'+JSON.stringify(n.textContent.slice(0,8)):'')));
+      console.warn('[SYNCWATCH→replaceAll] AFTER  doc=', JSON.stringify(t1));
+    }
     isSettingEditor = false;
   }
 }, { flush: 'sync' });
@@ -1794,9 +1496,49 @@ watch([previewPosition, previewWidth, phoneModel, showPreview], () => {
   saveSettings();
 });
 
+// ---------- 键盘快捷键 ----------
+const onKeydown = (e) => {
+  // 中文输入法（IME）打字时跳过快捷键，避免 Ctrl+S/C 等打断候选词输入
+  if (e.isComposing) return;
+  // 表单控件（输入框/文本域/下拉）聚焦时不触发全局快捷键，避免干扰 AI 提示词、品牌色、选项填写
+  const tag = e.target?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  const mod = e.ctrlKey || e.metaKey;
+  if (!mod) return;
+  const k = e.key.toLowerCase();
+  // Ctrl/Cmd + Shift + C → 复制 HTML
+  if (e.shiftKey && k === 'c') {
+    e.preventDefault();
+    copyHtml();
+  }
+  // Ctrl/Cmd + Shift + P → 切换预览
+  else if (e.shiftKey && k === 'p') {
+    e.preventDefault();
+    showPreview.value = !showPreview.value;
+  }
+  // Ctrl/Cmd + S → 保存草稿到本机（拦截浏览器「保存网页」）
+  else if (k === 's') {
+    e.preventDefault();
+    saveDraftNow();
+    saveSettings();
+    showToast('已保存到本机', 'success');
+  }
+  // Ctrl/Cmd + / → 切换快捷键帮助
+  else if (k === '/') {
+    e.preventDefault();
+    showShortcuts.value = !showShortcuts.value;
+  }
+};
+
 // ---------- 初始化 ----------
 onMounted(async () => {
   loadFromStorage();
+  // 新手引导：首次使用且无草稿时展示
+  // B9：恢复横幅优先——有可恢复草稿时不弹 Onboarding（避免首屏冲突/覆盖）
+  const settings = JSON.parse(localStorage.getItem('podcast_settings') || '{}');
+  if (!settings.onboardingDone && !localStorage.getItem('podcast_draft') && !showRecoveryBanner.value) {
+    showOnboarding.value = true;
+  }
   // 移动端默认隐藏预览
   if (window.matchMedia('(max-width: 768px)').matches) {
     showPreview.value = false;
@@ -1807,10 +1549,25 @@ onMounted(async () => {
     milkdownEditor = await Editor.make()
       .config((ctx) => {
         ctx.set(rootCtx, milkdownContainer.value);
-        ctx.set(defaultValueCtx, markdownText.value);
+        // 进入编辑器解析前先做裸 ::: 清理，防止与草稿里可能的 ::: cover 占位块错位误判
+        ctx.set(defaultValueCtx, stripBareDirectives(markdownText.value));
+        if (import.meta.env?.DEV) console.warn('[INIT] defaultValueCtx snip=', JSON.stringify(stripBareDirectives(markdownText.value).slice(0, 80)));
         // listener: 编辑器内容变化 → 同步到 markdownText
         ctx.get(listenerCtx).markdownUpdated((_, md) => {
           if (isSettingEditor) return;
+          if (import.meta.env?.DEV) console.warn('[MDUPD] rawHasCover=', /:::\s*cover/.test(md), 'rawHasBare=', /^[ \t]*:::[ \t]*$/m.test(md), 'snip=', JSON.stringify(md.slice(0, 80)));
+          if (import.meta.env?.DEV) {
+            try {
+              const v = milkdownEditor.action(ctx => ctx.get(editorViewCtx));
+              const t = []; v.state.doc.forEach(n => t.push(n.type.name + (n.textContent?':'+JSON.stringify(n.textContent.slice(0,8)):'')));
+              console.warn('[MDUPD] editorDoc=', JSON.stringify(t));
+            } catch(e) {}
+          }
+          // 还原 remark-directive 转义 + 剔除空段落序列化产生的「裸 :::」artifact
+          // （stripBareDirectives 内含转义还原与栈式精准剔除，详见函数注释 / Bug A 根因）。
+          // 这是编辑器端「封面卡片幽灵块」的最后一道防线：无论裸 ::: 来自何处，
+          // 只要进不了 markdownText，预览与后续解析都不会再误判成 cover 节点。
+          md = stripBareDirectives(md);
           isFromEditor = true;
           markdownText.value = md;
           isFromEditor = false;
@@ -1823,55 +1580,101 @@ onMounted(async () => {
       .use(quoteDirective)
       .use(commonmark)
       .use(gfm)
+      .use(history)
+      .use(forceParagraphEnter)
+      .use(headingEnterFix)
       .create();
+    // 调试钩子：暴露编辑器实例与 view，便于 puppeteer 包裹 dispatchTransaction 定位 Enter bug
+    if (typeof window !== 'undefined') {
+      window.__milkdownEditor = milkdownEditor;
+      try {
+        window.__milkdownView = milkdownEditor.action((ctx) => ctx.get(editorViewCtx));
+      } catch (_) {}
+    }
   } catch (e) {
     console.error('Milkdown 初始化失败:', e);
   }
 
+  // 首屏一次性重渲染：仅在内容含 ::: 语法时强制执行，确保 cover/divider/quote
+  // 容器被渲染为卡片而非回退为纯文本。无 ::: 的内容跳过避免无意义地 reset 光标/选区。
+  // 进入解析前统一做裸 ::: 清理（防御草稿里残留的裸 ::: / 占位块错位）。
+  if (milkdownEditor && markdownText.value.trim() && /:::\s*(cover|divider|quote)/.test(markdownText.value)) {
+    try {
+      isSettingEditor = true;
+      milkdownEditor.action(replaceAll(stripBareDirectives(markdownText.value)));
+      isSettingEditor = false;
+    } catch (e) {
+      isSettingEditor = false;
+      console.warn('首屏重渲染跳过:', e);
+    }
+  }
+
   convertMarkdown();
-  setInterval(() => { now.value = Date.now(); }, 15000);
+
+  // 选区轮询：驱动顶部上下文工具栏
+  const selTimer = setInterval(() => {
+    if (!milkdownEditor) return;
+    try {
+      const view = milkdownEditor.action(ctx => ctx.get(editorViewCtx));
+      if (!view || !view.state) return;
+      const { selection } = view.state;
+      const { from, to, empty } = selection;
+      selectionLength.value = to - from;
+      if (empty || selectionLength.value === 0) {
+        selectedType.value = null;
+        return;
+      }
+      const selNode = selection.node;
+      if (selNode && selNode.type.name === 'heading') {
+        selectedType.value = 'heading';
+      } else if (selNode && selNode.type.name === 'image') {
+        selectedType.value = null; // 图片暂无专用操作，不显示空白栏
+      } else if (!empty) {
+        selectedType.value = 'text'; // 任意长度文字均显示上下文栏
+      } else {
+        selectedType.value = null;
+      }
+    } catch (_) {
+      selectedType.value = null;
+    }
+  }, 500);
+  onUnmounted(() => clearInterval(selTimer));
   if (showRecoveryBanner.value) {
     setTimeout(() => { showRecoveryBanner.value = false; }, 10000);
   }
+
+  window.addEventListener('keydown', onKeydown);
+  
+  // 系统主题切换监听（驱动 systemDark ref 更新 → isDarkMode 响应式跟随）
+  systemDarkMql = window.matchMedia('(prefers-color-scheme: dark)');
+  const onSystemThemeChange = (e) => {
+    systemDark.value = e.matches;
+    // system 模式下实时跟随 OS：重设已解析的 data-theme，外壳即时切换明暗
+    if (themeMode.value === 'system') {
+      document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+    }
+  };
+  systemDarkMql.addEventListener('change', onSystemThemeChange);
+  window._onSystemThemeChange = onSystemThemeChange;
 });
 
 onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown);
+  // 移除系统主题切换监听
+  if (systemDarkMql && window._onSystemThemeChange) {
+    systemDarkMql.removeEventListener('change', window._onSystemThemeChange);
+    delete window._onSystemThemeChange;
+  }
+  // 兜底清理拖拽宽度的 document 级监听器：若组件卸载瞬间用户仍在拖拽，
+  // stopResize 不会触发，监听器将泄漏在 document 上，这里强制移除。
+  document.removeEventListener('pointermove', onResize);
+  document.removeEventListener('pointerup', stopResize);
   milkdownEditor?.destroy();
   milkdownEditor = null;
 });
 </script>
 
 <style>
-/* ========== Notion 风格全局变量 ========== */
-:root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f7f6fa;
-  --bg-hover: #f0eef6;
-  --bg-active: #e8e4f0;
-  
-  --text-primary: #37352f;
-  --text-secondary: #787774;
-  --text-tertiary: #6b6b6b;
-
-  --border-light: #eceaf2;
-  --border-medium: #e3e0ec;
-
-  --accent-blue: #2383e2;
-  --accent-green: #07c160;
-  
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-  
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.2s ease;
-}
-
 * {
   margin: 0;
   padding: 0;
@@ -1888,6 +1691,8 @@ body {
 
 .app-root {
   height: 100vh;
+  /* 移动端浏览器地址栏会撑大 100vh，dvh 按可见视口计算，避免底部工具栏被顶出屏幕 */
+  height: 100dvh;
   display: flex;
   overflow: hidden;
 }
@@ -1900,7 +1705,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px 0;
+  padding: 10px 0;
   flex-shrink: 0;
   z-index: 50;
 }
@@ -1911,7 +1716,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .brand-icon {
@@ -1922,16 +1727,42 @@ body {
   width: 28px;
   height: 1px;
   background: var(--border-light);
-  margin: 8px 0;
+  margin: 6px 0;
 }
 
 .toolbar-spacer {
   flex: 1;
 }
 
+/* 工具栏分组（任务流） */
+.toolbar-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 4px 0;
+}
+
+.toolbar-group + .toolbar-group {
+  border-top: 1px solid var(--border-light);
+  margin-top: 4px;
+  padding-top: 8px;
+}
+
+.toolbar-group-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  padding: 2px 0 4px;
+  opacity: 0.7;
+}
+
 .toolbar-item {
   width: 40px;
-  height: 52px;
+  height: 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1988,17 +1819,6 @@ body {
 
 .toolbar-item:hover .tooltip {
   opacity: 1;
-}
-
-/* 段组小标题 */
-.toolbar-section-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-tertiary);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin: 4px 0 2px;
-  pointer-events: none;
 }
 
 /* ========== 悬浮面板 ========== */
@@ -2071,6 +1891,27 @@ body {
   margin-bottom: 12px;
 }
 
+/* B5 三层叠放说明 */
+.cascade-note {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.cascade-note .cascade-title {
+  display: inline-block;
+  font-weight: 600;
+  color: var(--accent-green);
+  margin-right: 4px;
+}
+.cascade-note b {
+  color: var(--text-primary);
+}
+
 /* ========== 主体布局 ========== */
 .main-content {
   flex: 1;
@@ -2095,6 +1936,30 @@ body {
   }
 }
 
+/* 平板断点：768–1024px 区间布局收敛（B8 修复：面板改覆盖、编辑器最小宽≥480px） */
+@media (max-width: 1024px) {
+  .floating-panel {
+    width: 280px;
+  }
+  /* 面板改为覆盖而非推挤：去掉 margin-left，编辑器保留完整宽度（B8） */
+  .main-content.panel-open {
+    margin-left: 0;
+  }
+  /* 面板打开时隐藏预览，避免与面板争抢宽度，确保编辑器可见宽度≥480px（B8） */
+  .main-content.panel-open .preview-section {
+    display: none;
+  }
+  /* 面板关闭时预览作为窄侧栏；宽度上限保证编辑器始终≥480px（769px 下限不溢出） */
+  .preview-section {
+    width: 26vw !important;
+    max-width: 210px;
+  }
+  /* 编辑器最小宽度提升至 480px（对齐 B8 规范，写作区不为窄条） */
+  .editor-section {
+    min-width: 480px;
+  }
+}
+
 /* ========== 编辑器区域 ========== */
 .editor-section {
   flex: 1;
@@ -2111,9 +1976,11 @@ body {
 
 /* ========== 拖拽分隔线 ========== */
 .resize-handle {
+  position: relative;  /* 修复 ::before 绝对定位的偏移基准 */
   width: 6px;
   background: var(--bg-hover);
   cursor: col-resize;
+  touch-action: none;  /* 触屏拖拽不抢页面滚动 */
   transition: background var(--transition-fast);
   flex-shrink: 0;
 }
@@ -2188,10 +2055,18 @@ body {
   background: var(--bg-hover);
 }
 
+/* 预览按钮 active 态（浅色模式使用 text-primary 做高亮） */
 .preview-btn.active {
   background: var(--text-primary);
   color: white;
   border-color: var(--text-primary);
+}
+
+/* 深色模式下预览按钮 active 态使用强调蓝提升对比度 */
+:root[data-theme="dark"] .preview-btn.active {
+  background: var(--accent-blue);
+  color: #fff;
+  border-color: var(--accent-blue);
 }
 
 .preview-btn-group .preview-btn {
@@ -2204,12 +2079,6 @@ body {
 
 .preview-btn-group .preview-btn:last-child {
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-}
-
-.preview-btn-group .preview-btn.active {
-  background: var(--text-primary);
-  color: white;
-  border-color: var(--text-primary);
 }
 
 .phone-wrapper {
@@ -2230,6 +2099,12 @@ body {
   transition: width 0.2s ease;
 }
 
+/* 深色模式下手机框用更深底色 + 更明显的边框/阴影，与白色文章内容形成鲜明层次 */
+:root[data-theme="dark"] .phone-frame {
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3);
+  border-color: var(--border-medium);
+}
+
 .phone-frame.iphone-se { width: 375px; }
 .phone-frame.iphone-14 { width: 390px; }
 .phone-frame.iphone-14pm { width: 430px; }
@@ -2247,6 +2122,12 @@ body {
   user-select: none;
 }
 
+/* 深色模式下手机壳变暗，wechat 栏同步调暗 */
+:root[data-theme="dark"] .phone-wechat-bar {
+  background: #3c3c3c;
+  border-bottom-color: #505050;
+}
+
 .phone-wechat-bar .wechat-title {
   font-size: 12px;
   font-weight: 500;
@@ -2254,8 +2135,18 @@ body {
   pointer-events: none;
 }
 
+:root[data-theme="dark"] .phone-wechat-bar .wechat-title {
+  color: #d4d4d4;
+}
+
 .wechat-back, .wechat-menu {
   flex-shrink: 0;
+}
+
+/* 深色模式：微信顶栏图标变亮 */
+:root[data-theme="dark"] .wechat-back,
+:root[data-theme="dark"] .wechat-menu {
+  stroke: #8ab4f8;
 }
 
 .phone-content {
@@ -2264,8 +2155,16 @@ body {
   overflow-y: auto;
   font-size: 17px;
   line-height: 1.8;
-  color: #3e3e3e;
+  background: #ffffff;
   padding: 16px;
+  /* 注意：空状态文字用 CSS 变量，深色模式自动适配；
+     内部 buildHtml 输出的文章内容自带 color:#1a1a1a，不受此值影响 */
+  color: var(--text-tertiary, #3e3e3e);
+}
+
+/* 深色模式下空状态文字使用足够对比度的浅色 */
+:root[data-theme="dark"] .phone-content {
+  color: var(--text-secondary, #aaa);
 }
 
 .phone-content::-webkit-scrollbar {
@@ -2291,12 +2190,20 @@ body {
   min-height: 300px;
   text-align: center;
   color: var(--text-tertiary);
+  padding: 40px 24px;
 }
 
 .empty-icon {
-  font-size: 48px;
+  font-size: 52px;
   margin-bottom: 16px;
-  opacity: 0.5;
+  opacity: 0.6;
+}
+
+.empty-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
 }
 
 .empty-state p {
@@ -2305,8 +2212,44 @@ body {
 }
 
 .empty-hint {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-tertiary);
+  margin-bottom: 24px !important;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+.empty-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+.empty-feature {
+  font-size: 12px;
+  background: var(--bg-secondary);
+  padding: 4px 12px;
+  border-radius: 20px;
+  color: var(--text-secondary);
+  border: 0.5px solid var(--border-light);
+}
+
+.empty-sample-btn {
+  padding: 10px 24px;
+  font-size: 14px;
+  background: var(--accent-green);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+  font-weight: 500;
+}
+
+.empty-sample-btn:hover {
+  opacity: 0.9;
 }
 
 /* ========== 控件样式 ========== */
@@ -2534,6 +2477,113 @@ body {
   flex: 1;
 }
 
+/* ========== 本地图片上传 ========== */
+.image-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.image-upload-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border-medium);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.image-upload-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--text-tertiary);
+}
+
+.paste-hint {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.image-drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 16px 12px;
+  margin-bottom: 10px;
+  background: var(--bg-secondary);
+  border: 1.5px dashed var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-tertiary);
+  transition: all var(--transition-fast);
+  cursor: default;
+}
+
+.image-drop-zone:hover {
+  border-color: var(--border-medium);
+  background: var(--bg-hover);
+}
+
+.image-drop-zone.image-drop-active {
+  border-color: var(--accent-blue);
+  background: #e6f1fb;
+  color: var(--accent-blue);
+}
+
+.drop-text {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.image-drop-active .drop-text {
+  color: var(--accent-blue);
+}
+
+.drop-hint {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  opacity: 0.7;
+}
+
+/* ========== 图片编辑面板 ========== */
+.image-edit-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 0.5px solid var(--border-light);
+  min-height: 100px;
+}
+
+.image-edit-thumb {
+  max-width: 100%;
+  max-height: 140px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+}
+
+.image-edit-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.image-edit-actions .notion-btn-small {
+  justify-content: center;
+}
+
 /* ========== Toast 通知 ========== */
 .toast {
   position: fixed;
@@ -2550,6 +2600,10 @@ body {
 
 .toast.error {
   background: #dc2626;
+}
+
+.toast.warning {
+  background: #d97706;
 }
 
 /* ========== 过渡动画 ========== */
@@ -2579,20 +2633,116 @@ body {
 .status-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 6px 16px;
+  gap: 4px;
+  padding: 5px 16px;
   background: var(--bg-secondary);
   border-top: 1px solid var(--border-light);
-  font-size: 12px;
-  color: var(--text-secondary);
+  font-size: 11px;
+  color: var(--text-tertiary);
   flex-shrink: 0;
+  height: 26px;
 }
 
-.status-privacy {
-  color: var(--accent-green);
+.status-item {
   white-space: nowrap;
+}
+
+.status-sep {
+  opacity: 0.3;
+  margin: 0 2px;
+}
+
+.status-item.ai-status {
+  color: var(--accent-blue, #4cb3d9);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.ai-spinner {
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--accent-blue, #4cb3d9);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: ai-spin 0.6s linear infinite;
+  display: inline-block;
+}
+
+@keyframes ai-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ========== 上下文工具栏 ========== */
+.context-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-light);
+  border-radius: 8px 8px 0 0;
   font-size: 12px;
+  flex-shrink: 0;
+  min-height: 34px;
+}
+
+.context-label {
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+.context-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.context-field input[type="range"] {
+  width: 60px;
+  accent-color: var(--accent-blue, #4cb3d9);
+}
+
+.context-value {
+  font-size: 11px;
+  color: var(--text-secondary);
+  min-width: 28px;
+}
+
+.context-btn {
+  padding: 3px 8px;
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 11px;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.context-btn:hover {
+  background: var(--bg-hover, #eee);
+}
+
+.context-btn.context-danger {
+  color: #e74c3c;
+  border-color: #e74c3c;
+}
+
+.context-close {
+  margin-left: auto;
+  border: none;
+  background: none;
+  font-size: 16px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
 }
 
 /* ========== 恢复横幅 ========== */
@@ -2639,6 +2789,199 @@ body {
 .banner-slide-leave-to {
   transform: translateY(-100%);
   opacity: 0;
+}
+
+/* ========== 新手引导浮层 ========== */
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 13, 22, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  backdrop-filter: blur(4px);
+}
+
+.onboarding-card {
+  width: min(400px, 90vw);
+  max-height: 90dvh;
+  overflow-y: auto;
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-light, #e3e0ec);
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.32);
+  padding: 32px 28px 24px;
+  text-align: center;
+}
+
+.onboarding-steps {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.onboarding-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-light, #ddd);
+  transition: all 0.3s ease;
+}
+
+.onboarding-dot.active {
+  background: var(--accent-blue, #4cb3d9);
+  transform: scale(1.3);
+}
+
+.onboarding-dot.done {
+  background: var(--accent-green, #2ecc71);
+}
+
+.onboarding-body {
+  margin-bottom: 24px;
+}
+
+.onboarding-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.onboarding-body h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #1a1a2e);
+  margin: 0 0 12px;
+  line-height: 1.4;
+}
+
+.onboarding-body p {
+  font-size: 14px;
+  color: var(--text-secondary, #666);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.onboarding-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.onboarding-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.onboarding-tag {
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.onboarding-next {
+  width: 100%;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent-blue, #4cb3d9);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.onboarding-next:hover {
+  background: #3a9ec9;
+}
+
+.onboarding-next.onboarding-done {
+  background: var(--accent-green, #2ecc71);
+}
+
+.onboarding-next.onboarding-done:hover {
+  background: #27ae60;
+}
+
+.onboarding-skip {
+  border: none;
+  background: none;
+  font-size: 12px;
+  color: var(--text-tertiary, #999);
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.onboarding-skip:hover {
+  color: var(--text-secondary, #666);
+}
+
+/* ========== 快捷键帮助浮层 ========== */
+.shortcuts-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 13, 22, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+.shortcuts-card {
+  width: min(440px, 90vw);
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-light, #e3e0ec);
+  border-radius: 14px;
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+}
+.shortcuts-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.shortcuts-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 13.5px;
+  color: var(--text-secondary, #787774);
+  line-height: 1.5;
+}
+.shortcuts-list li span {
+  margin-left: 4px;
+  color: var(--text-primary, #37352f);
+}
+.shortcuts-list kbd {
+  display: inline-block;
+  padding: 3px 9px;
+  font-family: var(--font-mono, ui-monospace, 'SF Mono', 'Consolas', monospace);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-primary, #37352f);
+  background: var(--bg-secondary, #f7f6fa);
+  border: 1px solid var(--border-medium, #d8d4e8);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  min-width: 24px;
+  text-align: center;
 }
 
 /* ========== 装饰元素网格 ========== */
@@ -2699,6 +3042,45 @@ body {
   margin-bottom: 16px;
 }
 
+/* ========== AI 前置说明 ========== */
+.ai-intro-notice {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-left: 3px solid var(--accent, #7c5cff);
+  border-radius: var(--radius-sm, 6px);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.ai-intro-notice p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0 0 10px;
+}
+.ai-intro-notice strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.ai-intro-dismiss {
+  align-self: flex-start;
+  padding: 5px 14px;
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  background: var(--accent, #7c5cff);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.ai-intro-dismiss:hover {
+  opacity: 0.88;
+}
+/* 深色模式：强调色提亮为亮紫，白字对比度不足，改用深色文字（≥6:1） */
+:root[data-theme="dark"] .ai-intro-dismiss {
+  color: var(--bg-primary);
+}
+
 /* ========== 导入面板 ========== */
 .import-textarea {
   width: 100%;
@@ -2754,15 +3136,101 @@ body {
 }
 
 .ai-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
   margin-top: 8px;
+}
+
+/* 场景化推荐按钮（主要操作） */
+.ai-rec-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  text-align: left;
+}
+
+.ai-rec-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-blue);
+}
+
+.ai-rec-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ai-rec-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ai-rec-desc {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+/* 更多操作折叠区 */
+.ai-more-details {
+  border-top: 1px solid var(--border-light);
+  padding-top: 6px;
+  margin-top: 2px;
+}
+
+.ai-more-summary {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  user-select: none;
+  padding: 2px 0;
+}
+
+.ai-more-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding-top: 6px;
+}
+
+.ai-more-actions .notion-btn-small {
+  justify-content: center;
+  text-align: center;
 }
 
 .ai-actions .notion-btn-small {
   justify-content: center;
   text-align: center;
+}
+
+/* AI 加载行 + spinner */
+.ai-loading-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ai-spinner {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-medium, #d8d4e8);
+  border-top-color: var(--accent-blue, #534ab7);
+  border-radius: 50%;
+  animation: ai-spin 0.7s linear infinite;
+}
+@keyframes ai-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ai-spinner { animation-duration: 2s; }
 }
 
 /* ========== 套用全部按钮 ========== */
@@ -2824,12 +3292,22 @@ body {
     width: 100%;
     height: auto;
     flex-direction: row;
-    justify-content: space-around;
     align-items: center;
-    padding: 6px 4px;
+    gap: 4px;
+    padding: 6px 8px;
+    /* iPhone 底部安全区，避免横条被 Home Indicator 遮挡 */
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
     border-right: none;
     border-top: 1px solid var(--border-light);
+    /* 横向滚动：小屏（≤375px）12 个图标不再溢出或被挤压变形 */
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
     z-index: 100;
+  }
+  .left-toolbar::-webkit-scrollbar {
+    display: none;
   }
 
   .toolbar-brand,
@@ -2841,14 +3319,33 @@ body {
     display: none;
   }
 
-  .toolbar-section-label,
+  /* 移动端分组改为横向平铺，不再纵向堆叠（否则底部栏会被撑到 ~160px 高） */
+  .toolbar-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    padding: 0;
+  }
+  .toolbar-group + .toolbar-group {
+    border-top: none;
+    margin-top: 0;
+    padding-top: 0;
+    border-left: 1px solid var(--border-light);
+    margin-left: 4px;
+    padding-left: 6px;
+  }
+  .toolbar-group-label {
+    display: none;
+  }
+
   .toolbar-item .toolbar-label {
     display: none;
   }
 
   .toolbar-item {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 auto;
   }
 
   .toolbar-item .tooltip {
@@ -2867,6 +3364,8 @@ body {
 
   .main-content {
     flex-direction: column;
+    /* 让出底部固定工具栏空间，避免编辑器/预览被遮挡 */
+    padding-bottom: 56px;
   }
 
   /* 预览区在移动端变成全屏覆盖层，由浮钮/工具栏切换显隐 */
@@ -2897,6 +3396,16 @@ body {
     display: none;
   }
 
+  /* B2 预览头部在移动端避免溢出 */
+  .preview-controls {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .wechat-dark-toggle {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+
   .mobile-preview-fab {
     display: flex;
     align-items: center;
@@ -2911,6 +3420,23 @@ body {
     max-width: 430px;
   }
 }
+
+/* 手机横屏：高度紧张，压缩底栏并保留编辑区空间 */
+@media (max-width: 768px) and (orientation: landscape) {
+  .left-toolbar {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+  .toolbar-item {
+    width: 40px;
+    height: 40px;
+  }
+  .mobile-preview-fab {
+    top: 8px;
+    right: 8px;
+    padding: 6px 10px;
+  }
+}
 </style>
 
 <style scoped>
@@ -2918,7 +3444,8 @@ body {
 .milkdown-theme-editor {
   height: 100%;
   overflow-y: auto;
-  background: #ffffff;
+  background: var(--bg-primary);
+  transition: background var(--transition-normal);
 }
 
 :deep(.milkdown) {
@@ -2929,8 +3456,14 @@ body {
 :deep(.milkdown .ProseMirror) {
   min-height: 100%;
   outline: none;
+  color: var(--text-primary);
   word-wrap: break-word;
   white-space: pre-wrap;
+}
+
+/* 深色模式：编辑器编辑区域底色与外壳统一 */
+:root[data-theme="dark"] :deep(.milkdown .ProseMirror) {
+  color: #d4d4d4;
 }
 
 :deep(.milkdown .ProseMirror:focus) {

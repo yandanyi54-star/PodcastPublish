@@ -1,11 +1,17 @@
 # Dependencies
 node_modules/
 
-# Build output
-dist/
+# Build output (current + all stale variants, any suffix)
+dist*/
+
+# Safe-delete / trash leftovers
+.trash/
 
 # WorkBuddy project data
 .workbuddy/
+
+# Puppeteer test artifacts
+.chrome-profile/
 
 # OS & editor files
 .DS_Store

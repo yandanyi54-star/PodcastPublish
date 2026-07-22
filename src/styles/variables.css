@@ -1,0 +1,65 @@
+/* ========== 净排 · CSS 变量 ========== */
+/* 拆自 App.vue —— 全局设计令牌：颜色、阴影、圆角、过渡 */
+
+/* ========== 浅色模式 ========== */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f6fa;
+  --bg-hover: #f0eef6;
+  --bg-active: #e8e4f0;
+  
+  --text-primary: #37352f;
+  --text-secondary: #787774;
+  --text-tertiary: #6b6b6b;
+
+  /* 品牌强调色（AI 前置说明、外观面板操作等统一引用，消除 var(--accent, #xxx) 漂移） */
+  --accent: #7c5cff;
+
+  --border-light: #eceaf2;
+  --border-medium: #e3e0ec;
+
+  --accent-blue: #2383e2;
+  --accent-green: #07c160;
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+}
+
+/* ========== 深色模式 ========== */
+:root[data-theme="dark"] {
+  --bg-primary: #2e2d38;
+  --bg-secondary: #26252f;
+  --bg-hover: #383644;
+  --bg-active: #424052;
+
+  --text-primary: #eae8f0;
+  --text-secondary: #b0aec0;
+  /* 深色下提亮至 #9b99ab，与 bg-primary(#2e2d38) 对比度 3.82→4.87，达 WCAG AA 正文 4.5:1 */
+  --text-tertiary: #9b99ab;
+
+  /* 品牌强调色（深色提亮以在深色背景保持清晰） */
+  --accent: #9b8cff;
+
+  --border-light: #3c3a48;
+  --border-medium: #484656;
+
+  --accent-blue: #5bc5eb;
+  --accent-green: #3dd97f;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.42);
+}
+
+/* ========== 跟随系统 ========== */
+/* system 模式已由 JS 端 resolveMode 解析为 data-theme="light" | "dark"，
+   外壳变量无需在此感知 system；OS 切换时由 App.vue 重设 data-theme 实时跟随 */
