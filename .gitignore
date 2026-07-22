@@ -10,6 +10,9 @@ dist*/
 # WorkBuddy project data
 .workbuddy/
 
+# Local-only private workspace (internal notes / personal docs, never pushed)
+private/
+
 # Puppeteer test artifacts
 .chrome-profile/
 
