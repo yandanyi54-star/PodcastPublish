@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# WorkBuddy project data
+.workbuddy/
+
+# OS & editor files
+.DS_Store
+Thumbs.db
+*.log
